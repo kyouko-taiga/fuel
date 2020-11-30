@@ -1,0 +1,13 @@
+/// Exchanges the values of the two arguments.
+///
+/// This is an example of a function that borrows two pointers to mutate them. The pointers cannot
+/// overlap, because the function requires a capability for each of them.
+func swap(x, y) : \A a, b . ((!a + [a: Int], !b + [b: Int]) -> Void + [a: Int] + [b: Int]) {
+  lhs = load x
+  rhs = load y
+
+  store lhs, y
+  store rhs, x
+
+  return void
+}

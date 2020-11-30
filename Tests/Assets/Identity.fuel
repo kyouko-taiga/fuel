@@ -1,0 +1,7 @@
+/// Returns the value passed as an argument.
+func identity(x) : (Int) -> Int {
+  local = salloc Int
+  store x, local
+  y = load local
+  return y
+}
