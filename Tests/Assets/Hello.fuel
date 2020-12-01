@@ -1,13 +1,27 @@
-func f(x) : \A a . ((!a + [a: Int]) -> Int + [a: Int])
+/// Exchanges the values of the two arguments.
+func swap(x, y) : \A a, b . ((!a + [a: Int], !b + [b: Int]) -> Void + [a: Int] + [b: Int]) {
+  lhs = load x
+  rhs = load y
+  store lhs, y
+  store rhs, x
+  return void
+}
+
+/// A foreign function.
+func ext(x) : \A a . ((!a + [a: Int]) -> Int + [a: Int])
 
 func hello(x) : (Int) -> Int {
   local = salloc Int
 
   if true {
-    store x, local
+    y = salloc Int
+    store x, y
+    store 0, local
+
+    z = call swap, local, y
   } else {
     store 0, local
-    foo = call f, local
+    foo = call ext, local
   }
 
   y = load local
