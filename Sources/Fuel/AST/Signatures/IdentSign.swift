@@ -14,7 +14,7 @@ public final class IdentSign: TypeSign {
   /// The declaration to which this identifier refers.
   public var referredDecl: NominalTypeDecl?
 
-  public var type: TypeBase?
+  public var type: QualType?
 
   public var range: SourceRange?
 

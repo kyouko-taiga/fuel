@@ -6,8 +6,6 @@ public final class BoolLit: Expr {
 
   public var value: Bool
 
-  public let type: TypeBase? = BuiltinType.bool
-
   public var range: SourceRange?
 
   public func accept<V>(_ visitor: V) where V: Visitor {

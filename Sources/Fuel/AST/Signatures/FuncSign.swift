@@ -11,7 +11,7 @@ public final class FuncSign: TypeSign {
   /// The signature of the function's output.
   public var output: TypeSign
 
-  public var type: TypeBase?
+  public var type: QualType?
 
   public var range: SourceRange?
 

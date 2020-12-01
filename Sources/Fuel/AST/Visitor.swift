@@ -27,7 +27,7 @@ public protocol Visitor {
 
   func visit(_ node: UniversalSign)
 
-  func visit(_ node: QualifiedSign)
+  func visit(_ node: QualSign)
 
   func visit(_ node: FuncSign)
 
@@ -261,14 +261,14 @@ extension Visitor {
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to visit.
-  public func visit(_ node: QualifiedSign) {
+  public func visit(_ node: QualSign) {
     traverse(node)
   }
 
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to traverse.
-  @inlinable public func traverse(_ node: QualifiedSign) {
+  @inlinable public func traverse(_ node: QualSign) {
     node.base.accept(self)
   }
 

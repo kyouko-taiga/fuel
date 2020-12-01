@@ -1,12 +1,7 @@
-/// The base class for all fully resolved semantic types.
+/// The base class for all bare types.
 ///
-/// Types, once created, are immutable.
-public class TypeBase {
-
-  /// The type's canonical form.
-  public var canonical: QualifiedType {
-    return QualifiedType(base: self, qualifiers: [])
-  }
+/// Base types, once created, are immutable.
+public class BareType {
 
   /// The type obtained by applying the given substitution.
   public func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
@@ -16,21 +11,21 @@ public class TypeBase {
   /// Returns whether this type is equal to another one.
   ///
   /// - Parameter other: Another semantic type.
-  public func isEqual(to other: TypeBase) -> Bool {
+  public func isEqual(to other: BareType) -> Bool {
     return self === other
   }
 
   /// Returns whether this type is a subtype of another one.
   ///
   /// - Parameter other: Another semantic type.
-  public func isSubtype(of other: TypeBase) -> Bool {
+  public func isSubtype(of other: BareType) -> Bool {
     return isEqual(to: other) || other.isEqual(to: BuiltinType.junk)
   }
 
-  /// Returns the "join" of this type with another type `τ`, i.e., the least supertype of both.
+  /// Returns the "join" of this type with another type, i.e., the least supertype of both.
   ///
   /// - Parameter other: Another semantic type.
-  public func join(with other: TypeBase) -> TypeBase {
+  public func join(with other: BareType) -> BareType {
     return isEqual(to: other)
       ? self
       : BuiltinType.junk

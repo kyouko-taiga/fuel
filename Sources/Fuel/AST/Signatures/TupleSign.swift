@@ -6,7 +6,7 @@ public final class TupleSign: TypeSign {
 
   public var members: [TypeSign]
 
-  public var type: TypeBase?
+  public var type: QualType?
 
   public var range: SourceRange?
 

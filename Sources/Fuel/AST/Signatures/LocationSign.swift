@@ -7,7 +7,7 @@ public final class LocationSign: TypeSign {
 
   public var location: IdentExpr
 
-  public var type: TypeBase?
+  public var type: QualType?
 
   public var range: SourceRange?
 

@@ -6,7 +6,7 @@ public final class PointerSign: TypeSign {
 
   public var base: TypeSign
 
-  public var type: TypeBase?
+  public var type: QualType?
 
   public var range: SourceRange?
 

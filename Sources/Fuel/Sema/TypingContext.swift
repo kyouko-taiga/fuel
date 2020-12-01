@@ -1,8 +1,8 @@
 /// A type assumption.
-public typealias Assumption = (key: Symbol, value: TypeBase)
+public typealias Assumption = (key: Symbol, value: QualType)
 
 /// A set of type assumptions.
-public typealias TypingContext = [Symbol: TypeBase]
+public typealias TypingContext = [Symbol: QualType]
 
 extension TypingContext {
 

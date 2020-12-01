@@ -28,7 +28,7 @@ public final class FuncDecl: NamedDecl, DeclContext {
   public var body: Block?
 
   /// The function's semantic type.
-  public var type: TypeBase?
+  public var type: QualType?
 
   public var parent: DeclContext?
 

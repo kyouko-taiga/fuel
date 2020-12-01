@@ -9,7 +9,7 @@ public final class FuncParamDecl: NamedDecl {
   public var name: String
 
   /// The parameter's type.
-  public var type: TypeBase?
+  public var type: QualType?
 
   public var declContext: DeclContext?
 

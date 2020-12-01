@@ -42,7 +42,7 @@ public final class TypeChecker: Visitor {
       let symbol = Symbol(decl: decl)
 
       if decl is ScopeAllocStmt {
-        let a = (gamma[symbol] as! LocationType).location
+        let a = (gamma[symbol]!.bareType as! LocationType).location
         gamma[a] = nil
       }
 
@@ -55,7 +55,7 @@ public final class TypeChecker: Visitor {
     let funcType: FuncType
     let quantifiedParams: [QuantifiedParam]
 
-    switch type(of: node.ident)?.canonical.base {
+    switch type(of: node.ident)?.bareType {
     case let ft as FuncType:
       funcType = ft
       quantifiedParams = []
@@ -80,16 +80,17 @@ public final class TypeChecker: Visitor {
     // List the assumptions that the function requires.
     var assumptions: [Assumption] = []
     for (argValue, paramType) in zip(node.args, funcType.params) {
-      let base: TypeBase
-      if let pt = paramType as? PackedType {
-        base = pt.base
-        assumptions.append(contentsOf: pt.assumptions)
+      let argType: QualType
+
+      if let (tau, eta) = paramType.unpacked {
+        argType = tau
+        assumptions.append(contentsOf: eta)
       } else {
-        base = paramType
+        argType = paramType
       }
 
       if let symbol = (argValue as? IdentExpr)?.referredDecl?.symbol {
-        assumptions.append((symbol, base))
+        assumptions.append((symbol, argType))
       }
     }
 
@@ -111,11 +112,10 @@ public final class TypeChecker: Visitor {
       gamma[key] = nil
     }
 
-    let output = funcType.output.canonical.substituting(substitutions)
-    if let pt = output.base as? PackedType {
-      gamma[Symbol(decl: node)] = QualifiedType(base: pt.base, qualifiers: output.qualifiers)
-
-      for assumption in pt.assumptions {
+    let output = funcType.output.substituting(substitutions)
+    if let (tau, eta) = output.unpacked {
+      gamma[Symbol(decl: node)] = tau
+      for assumption in eta {
         assert(gamma[assumption.key] == nil)
         gamma[assumption.key] = assumption.value
       }
@@ -157,24 +157,23 @@ public final class TypeChecker: Visitor {
       // Get the symbol on which the assumption is defined, using the substitutions we have guessed
       // so far if necessary.
       let symbol = substitutions[assumptions[i].key] ?? assumptions[i].key
-      let rhs = assumptions[i].value.substituting(substitutions).canonical
+      let rhs = assumptions[i].value.substituting(substitutions)
 
-      if let type = gamma[symbol] {
+      if let lhs = gamma[symbol] {
         assert(!quantifiedParams.contains(symbol.name ?? ""))
 
-        // Make sure the assumption wasn't already framed out.
+        // Make sure the assumption wasn't already consumed.
         guard !consumed.contains(symbol) else {
           return nil
         }
 
         // Check if the context supports the assumption, i.e., if it maps its symbol to a subtype.
-        let lhs = type.canonical
         guard lhs.isSubtype(of: rhs) else {
           return nil
         }
 
         // Consume the assumption, unless it is copyable.
-        if !lhs.qualifiers.contains(.copyable) {
+        if symbol.isReferringToLocation {
           consumed.append(symbol)
         }
       } else if quantifiedParams.contains(symbol.name ?? "") {
@@ -218,7 +217,7 @@ public final class TypeChecker: Visitor {
     // quantified function type. In the latter case, we can remove the universal quantier and
     // "instanciate" the function type.
     let declType: FuncType
-    switch node.type?.canonical.base {
+    switch node.type?.bareType {
     case let ft as FuncType:
       declType = ft
 
@@ -242,13 +241,13 @@ public final class TypeChecker: Visitor {
       }
 
       let symbol = Symbol(decl: param)
-      if let packedType = param.type as? PackedType {
+      if let (tau, eta) = param.type?.unpacked {
         // Unpack the parameter type.
-        gamma[symbol] = packedType.base
+        gamma[symbol] = tau
 
         // Check that each packed assumption either adds a new binding, or agrees with the context.
-        for assumption in packedType.assumptions {
-          if let ty = gamma[assumption.key], !ty.isEqual(to: assumption.value) {
+        for assumption in eta {
+          if let tau = gamma[assumption.key], tau != assumption.value {
             compilerContext.report(message: "type of parameter '\(param.name)' is inconsistent")
               .set(location: param.range?.lowerBound)
               .add(range: param.range)
@@ -277,7 +276,9 @@ public final class TypeChecker: Visitor {
     node.cond.accept(self)
 
     // Check that the condition is a subtype of Bool.
-    guard type(of: node.cond)?.isSubtype(of: BuiltinType.bool) ?? false else {
+    guard let tau = type(of: node.cond),
+          tau <= QualType(bareType: BuiltinType.bool)
+    else {
       compilerContext.report(message: "condition '\(node.cond)' should be Boolean")
         .set(location: node.cond.range?.lowerBound)
         .add(range: node.cond.range)
@@ -332,7 +333,7 @@ public final class TypeChecker: Visitor {
     // There are two cases to consider; the first is when the value reference is an identifier, the
     // second is when it's a member expression. In either case, the type of the value reference
     // should be `!a` for some location `a`.
-    guard let a = (nodeType as? LocationType)?.location else {
+    guard let a = (nodeType.bareType as? LocationType)?.location else {
       compilerContext.report(message: "invalid value reference '\(node.valueRef)'")
         .set(location: node.valueRef.range?.lowerBound)
         .add(range: node.valueRef.range)
@@ -340,14 +341,14 @@ public final class TypeChecker: Visitor {
     }
 
     // Check if we hold a capability `[a: τ]`.
-    guard let ty = gamma[a] else {
+    guard let tau = gamma[a] else {
       compilerContext.report(message: "load requires missing capability '[\(a): τ]'")
         .set(location: node.range?.lowerBound)
         .add(range: node.valueRef.range)
       return
     }
 
-    gamma[Symbol(decl: node)] = ty
+    gamma[Symbol(decl: node)] = tau
   }
 
   public func visit(_ node: Module) {
@@ -374,15 +375,13 @@ public final class TypeChecker: Visitor {
     }
 
     // Check that the type of the return value matches the function's output type.
-    let outputType: TypeBase
+    let outputType: QualType
     let assumptions: TypingContext
 
-    switch funcType.output {
-    case let ext as PackedType:
-      outputType = ext.base
-      assumptions = ext.assumptions
-
-    default:
+    if let (tau, eta) = funcType.output.unpacked {
+      outputType = tau
+      assumptions = eta
+    } else {
       outputType = funcType.output
       assumptions = [:]
     }
@@ -400,7 +399,7 @@ public final class TypeChecker: Visitor {
     // Verity that the the environment contains the assumptions described by the function's
     // return type.
     for assumption in assumptions {
-      guard let ty = gamma[assumption.key] else {
+      guard let tau = gamma[assumption.key] else {
         compilerContext.report(
           message:
             "function return requires missing capability " +
@@ -410,10 +409,10 @@ public final class TypeChecker: Visitor {
         continue
       }
 
-      guard ty.isSubtype(of: assumption.value) else {
+      guard tau <= assumption.value else {
         compilerContext.report(
           message:
-            "cannot convert capability '[\(assumption.key): \(ty)]' " +
+            "cannot convert capability '[\(assumption.key): \(tau)]' " +
             "to expected capability '[\(assumption.key): \(assumption.value)]'")
           .set(location: node.range?.lowerBound)
           .add(range: node.range)
@@ -425,8 +424,8 @@ public final class TypeChecker: Visitor {
   public func visit(_ node: ScopeAllocStmt) {
     // Allocate a new location and create a capacity for it.
     let a = alloc()
-    gamma[Symbol(decl: node)] = LocationType(location: a)
-    gamma[a] = BuiltinType.junk
+    gamma[Symbol(decl: node)] = QualType(bareType: LocationType(location: a))
+    gamma[a] = QualType(bareType: BuiltinType.junk)
   }
 
   public func visit(_ node: StoreStmt) {
@@ -449,7 +448,7 @@ public final class TypeChecker: Visitor {
     }
 
     // The target identifier should have type `!a`.
-    guard let a = (identType as? LocationType)?.location else {
+    guard let a = (identType.bareType as? LocationType)?.location else {
       compilerContext.report(message: "cannot store to a value of type '\(identType)'")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
@@ -478,19 +477,19 @@ public final class TypeChecker: Visitor {
   }
 
   /// Implements `Γ ⊢ e : τ`.
-  private func type(of e: Expr) -> TypeBase? {
+  private func type(of e: Expr) -> QualType? {
     switch e {
     case is BoolLit:
-      return BuiltinType.bool
+      return QualType(bareType: BuiltinType.bool)
 
     case is IntLit:
-      return BuiltinType.int
+      return QualType(bareType: BuiltinType.int)
 
     case is VoidLit:
-      return BuiltinType.void
+      return QualType(bareType: BuiltinType.void)
 
     case is JunkLit:
-      return BuiltinType.junk
+      return QualType(bareType: BuiltinType.junk)
 
     case let ident as IdentExpr:
       guard let decl = ident.referredDecl else {

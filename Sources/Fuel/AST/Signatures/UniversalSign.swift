@@ -8,7 +8,7 @@ public final class UniversalSign: TypeSign, DeclContext {
 
   public var base: TypeSign
 
-  public var type: TypeBase?
+  public var type: QualType?
 
   public var params: [QuantifiedParamDecl]
 

@@ -280,8 +280,8 @@ public enum FuelParser {
         sign.range = base.range!.lowerBound ..< assumptions.last!.range!.upperBound
       }
 
-      if let qualSet = qualifiers?.compactMap(TypeQualifier.init(token:)) {
-        sign = QualifiedSign(base: sign, qualifiers: qualSet)
+      if let qualSet = qualifiers?.compactMap(TypeQual.init(token:)) {
+        sign = QualSign(base: sign, qualifiers: qualSet)
         sign.range = qualifiers!.first!.range.lowerBound ..< sign.range!.upperBound
       }
 
@@ -369,7 +369,7 @@ extension Parser where Stream == ArraySlice<Token> {
 
 }
 
-extension TypeQualifier {
+extension TypeQual {
 
   init?(token: Token) {
     switch token.value {

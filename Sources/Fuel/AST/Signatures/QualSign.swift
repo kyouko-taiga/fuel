@@ -1,16 +1,16 @@
 /// The signature of a qualified type.
-public final class QualifiedSign: TypeSign {
+public final class QualSign: TypeSign {
 
-  public init(base: TypeSign, qualifiers: [TypeQualifier]) {
+  public init(base: TypeSign, qualifiers: [TypeQual]) {
     self.base = base
     self.qualifiers = qualifiers
   }
 
   public var base: TypeSign
 
-  public var qualifiers: [TypeQualifier]
+  public var qualifiers: [TypeQual]
 
-  public var type: TypeBase?
+  public var type: QualType?
 
   public var range: SourceRange?
 
@@ -20,7 +20,7 @@ public final class QualifiedSign: TypeSign {
 
 }
 
-extension QualifiedSign: CustomStringConvertible {
+extension QualSign: CustomStringConvertible {
 
   public var description: String {
     var string = ""

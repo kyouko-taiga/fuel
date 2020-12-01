@@ -1,21 +1,21 @@
 /// A function type.
-public final class FuncType: TypeBase {
+public final class FuncType: BareType {
 
   /// Initializes a function type.
   ///
   /// Parameters:
   /// - params: The function's parameters.
   /// - output: The function's output type.
-  public init(params: [TypeBase], output: TypeBase) {
+  public init(params: [QualType], output: QualType) {
     self.params = params
     self.output = output
   }
 
   /// The function's parameters.
-  public let params: [TypeBase]
+  public let params: [QualType]
 
   /// The function's output type.
-  public let output: TypeBase
+  public let output: QualType
 
   public override func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
     return FuncType(

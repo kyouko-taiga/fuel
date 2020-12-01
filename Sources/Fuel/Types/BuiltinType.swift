@@ -1,5 +1,5 @@
 /// A built-in type.
-public final class BuiltinType: TypeBase {
+public final class BuiltinType: BareType {
 
   private init(name: String) {
     self.name = name

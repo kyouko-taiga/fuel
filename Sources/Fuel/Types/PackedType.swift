@@ -5,21 +5,21 @@
 /// the type of a function parameter expecting a dereferenceable pointer to `τ` is a packed type
 /// `!a + [a: τ]`, inhabited by a memory location `a` and the assumption that a value of type `τ`
 /// is stored there.
-public final class PackedType: TypeBase {
+public final class PackedType: BareType {
 
   /// Creates a new packed type.
   ///
   /// - Parameters:
   ///   - base: A type. `base` should not be a packed type.
   ///   - assumptions: A set of assumptions.
-  public init(base: TypeBase, assumptions: TypingContext) {
+  public init(base: BareType, assumptions: TypingContext) {
     precondition(!(base is PackedType))
     self.base = base
     self.assumptions = assumptions
   }
 
   /// A type.
-  public var base: TypeBase
+  public var base: BareType
 
   /// A set of assumptions.
   public var assumptions: TypingContext

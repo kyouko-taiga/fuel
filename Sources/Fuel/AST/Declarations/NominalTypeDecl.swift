@@ -2,6 +2,6 @@
 public protocol NominalTypeDecl: NamedDecl {
 
   /// The semantic type represented by the declaration.
-  var type: TypeBase? { get }
+  var type: BareType? { get }
 
 }

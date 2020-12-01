@@ -1,13 +1,13 @@
 /// A universal type.
-public final class UniversalType: TypeBase {
+public final class UniversalType: BareType {
 
   /// Creates a new universal type.
-  public init(base: TypeBase, params: [QuantifiedParam]) {
+  public init(base: BareType, params: [QuantifiedParam]) {
     self.base = base
     self.params = params
   }
 
-  public let base: TypeBase
+  public let base: BareType
 
   public let params: [QuantifiedParam]
 

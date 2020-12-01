@@ -12,7 +12,7 @@ public final class BuiltinTypeDecl: NominalTypeDecl {
 
   public let name: String
 
-  public let type: TypeBase?
+  public let type: BareType?
 
   public weak var declContext: DeclContext?
 

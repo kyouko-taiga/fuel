@@ -6,8 +6,6 @@ public final class IntLit: Expr {
 
   public var value: Int
 
-  public let type: TypeBase? = BuiltinType.int
-
   public var range: SourceRange?
 
   public func accept<V>(_ visitor: V) where V: Visitor {

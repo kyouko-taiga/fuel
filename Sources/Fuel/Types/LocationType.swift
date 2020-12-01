@@ -1,7 +1,7 @@
 /// The type of a single memory location.
 ///
 /// Formally, a location type is a singleton type whose inhabitant designates a memory location.
-public final class LocationType: TypeBase {
+public final class LocationType: BareType {
 
   /// Creates a new location type.
   ///
@@ -14,7 +14,7 @@ public final class LocationType: TypeBase {
   public let location: Symbol
 
 
-  public override func isEqual(to other: TypeBase) -> Bool {
+  public override func isEqual(to other: BareType) -> Bool {
     guard let rhs = other as? LocationType else {
       return false
     }

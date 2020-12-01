@@ -10,7 +10,7 @@ public final class PackedSign: TypeSign {
 
   public var assumptions: [AssumptionSign]
 
-  public var type: TypeBase?
+  public var type: QualType?
 
   public var range: SourceRange?
 
