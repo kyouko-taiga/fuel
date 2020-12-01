@@ -27,7 +27,7 @@ public struct Symbol {
     // Set the MSB at 1 so that the ID cannot clash with an object identifier.
     var identifier = id | (0b1 << (Int.bitWidth - 1))
     if isReferringToLocation {
-      identifier = (0b1 << (Int.bitWidth - 2))
+      identifier |= (0b1 << (Int.bitWidth - 2))
     }
 
     self.id = identifier
