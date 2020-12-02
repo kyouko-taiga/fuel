@@ -5,3 +5,16 @@ func main() : () -> Void {
 
   return void
 }
+
+func f(x) : (Int) -> Int {
+  _0 = salloc Int
+
+  if true {
+    store 0, _0
+  } else {
+    store x, _0
+  }
+
+  y = load _0
+  return y
+}
