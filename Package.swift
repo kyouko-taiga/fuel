@@ -17,5 +17,6 @@ let package = Package(
   targets: [
     .target(name: "fuelc", dependencies: ["Fuel"]),
     .target(name: "Fuel", dependencies: ["Diesel"]),
+    .testTarget(name: "FuelTests", dependencies: ["Fuel"]),
   ]
 )

@@ -1,0 +1,11 @@
+func main() : () -> Void {
+  foo = salloc Int
+  store 42, foo
+
+  bar = salloc Int
+  store true, foo
+
+  // #!error@+2 cannot find 'ham' in scope
+  // #!error@+1 cannot determine the type of 'ham'
+  store 1337, ham
+}

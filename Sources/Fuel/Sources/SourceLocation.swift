@@ -30,4 +30,7 @@ extension SourceLocation: Comparable {
 
 }
 
+extension SourceLocation: Hashable {
+}
+
 public typealias SourceRange = Range<SourceLocation>

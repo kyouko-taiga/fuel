@@ -11,21 +11,21 @@ struct Console: DiagnosticConsumer {
 
   func consume(_ diagnostic: Diagnostic, at location: SourceLocation) {
     // Load the contents of the source file.
-    let contents = sourceManager.contents(of: location.sourceURL)
+    guard let source = try? sourceManager.load(contentsOf: location.sourceURL) else {
+      consume(diagnostic)
+      return
+    }
 
     // Identify the line and column at which the diagnostic is located.
-    let prefix = contents.prefix(upTo: location.sourceIndex)
-    let lineIndex = prefix.occurences(of: "\n")
-    let columnIndex = prefix.distance(
-      from: prefix.lastIndex(of: "\n") ?? prefix.startIndex,
-      to: location.sourceIndex)
+    let (lineIndex, columnIndex) = source.caretPosition(at: location)
 
     // Print the diagnostic.
     let filename = location.sourceURL.path(relativeTo: FileManager.default.currentDirectoryPath)
-    print("\(filename):\(lineIndex + 1):\(columnIndex + 1): ", terminator: "")
+    print("\(filename):\(lineIndex):\(columnIndex): ", terminator: "")
     print(diagnostic.message)
 
     // Print the source ranges, if any.
+    let contents = source.contents
     for range in diagnostic.ranges {
       // Extract the line containing the range.
       let rangeStart = range.lowerBound.sourceIndex

@@ -2,7 +2,12 @@ import Diesel
 
 public enum FuelParser {
 
+  public static var isInitialized = false
+
   public static func initialize() {
+    guard !isInitialized else { return }
+    isInitialized = true
+
     stmt.define(
          varDecl
       || free   .map({ $0 as Stmt })

@@ -21,6 +21,24 @@ public final class SourceManager {
   /// A file content cache.
   private var contentCache: [URL: String] = [:]
 
+  /// Loads a source file from the URL of a local file.
+  ///
+  /// - Parameters:
+  ///   - url: The URL of a local file.
+  ///   - encoding: The character encoding of the file at `path`.
+  public func load(
+    contentsOf url: URL,
+    encoding: String.Encoding = .utf8
+  ) throws -> SourceFile {
+    let url = url.absoluteURL
+    if contentCache[url] != nil {
+      return SourceFile(manager: self, url: url)
+    }
+
+    contentCache[url] = try String(contentsOf: url, encoding: encoding)
+    return SourceFile(manager: self, url: url)
+  }
+
   /// Loads a source file from a local path.
   ///
   /// - Parameters:
@@ -30,13 +48,7 @@ public final class SourceManager {
     contentsOf path: String,
     encoding: String.Encoding = .utf8
   ) throws -> SourceFile {
-    let url = URL(fileURLWithPath: path).absoluteURL
-    if contentCache[url] != nil {
-      return SourceFile(manager: self, url: url)
-    }
-
-    contentCache[url] = try String(contentsOf: url, encoding: encoding)
-    return SourceFile(manager: self, url: url)
+    return try load(contentsOf: URL(fileURLWithPath: path), encoding: encoding)
   }
 
   /// Loads a source file from a string buffer.

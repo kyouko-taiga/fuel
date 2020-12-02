@@ -19,4 +19,16 @@ public struct SourceFile {
     return SourceLocation(sourceURL: url, sourceIndex: index)
   }
 
+  /// Returns the 1-based line and column indices of the given location in this source.
+  public func caretPosition(at location: SourceLocation) -> (lineIndex: Int, columnIndex: Int) {
+    // Identify the line and column at which the diagnostic is located.
+    let prefix = contents.prefix(upTo: location.sourceIndex)
+    let lineIndex = prefix.occurences(of: "\n")
+    let columnIndex = prefix.distance(
+      from: prefix.lastIndex(of: "\n") ?? prefix.startIndex,
+      to: location.sourceIndex)
+
+    return (lineIndex + 1, columnIndex + 1)
+  }
+
 }
