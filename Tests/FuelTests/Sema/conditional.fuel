@@ -1,0 +1,7 @@
+func main() : () -> Void {
+  // #!error@+1 condition 'void' should be Boolean
+  if void {
+  }
+
+  return void
+}

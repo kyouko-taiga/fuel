@@ -1,0 +1,8 @@
+func f() : () -> Void {
+  // #!error@+2 cannot find 'nope' in scope
+  // #!error@+1 cannot determine the type of expression 'nope'
+  return nope
+
+  // #!error@+1 cannot convert value of type 'Int' to expected type 'Void'
+  return 1
+}

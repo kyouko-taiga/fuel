@@ -1,0 +1,19 @@
+func main() : () -> Void {
+  // #!error@+1 invalid value reference '42'
+  _0 = load 42
+
+  // #!error@+2 cannot find 'nope' in scope
+  // #!error@+1 cannot determine the type of expression 'nope'
+  _1 = load nope
+
+  _2 = salloc Int
+  store 1337, _2
+  _3 = call consume, _2
+
+  // #!error@+1 load requires missing capability '[#0: τ]'
+  _4 = load _2
+
+  return void
+}
+
+func consume(x) : \A a . ((!a + [a: Int]) -> Void)

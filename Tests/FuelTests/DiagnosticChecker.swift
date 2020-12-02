@@ -15,7 +15,7 @@ class DiagnosticChecker: DiagnosticConsumer {
   var expectations: [Int: [DiagnosticPattern]]
 
   func consume(_ diagnostic: Diagnostic) {
-    XCTFail("Unexpected diagnostic '\(diagnostic.message)'")
+    XCTFail("Unexpected diagnostic: \(diagnostic.message)")
   }
 
   func consume(_ diagnostic: Diagnostic, at location: SourceLocation) {
@@ -28,7 +28,7 @@ class DiagnosticChecker: DiagnosticConsumer {
     let (lineIndex, _) = source.caretPosition(at: location)
     let exp = expectations[lineIndex] ?? []
     guard let i = exp.firstIndex(where: { $0.matches(diagnostic) }) else {
-      XCTFail("Unexpected diagnostic '\(diagnostic.message)'")
+      XCTFail("Unexpected diagnostic: \(diagnostic.message)")
       return
     }
 
@@ -46,7 +46,11 @@ struct DiagnosticPattern {
   var message: String?
 
   func matches(_ diagnostic: Diagnostic) -> Bool {
-    return (message == nil) || (message == diagnostic.message)
+    if let message = self.message {
+      return message == diagnostic.message
+    } else {
+      return true
+    }
   }
 
 }

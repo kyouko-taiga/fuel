@@ -286,7 +286,7 @@ public final class TypeChecker: Visitor {
   public func visit(_ node: ReturnStmt) {
     // Determine the type of the return value.
     guard let returnValueType = type(of: node.value) else {
-      compilerContext.report(message: "cannot determine the type of '\(node.value)'")
+      compilerContext.report(message: "cannot determine the type of expression '\(node.value)'")
         .set(location: node.value.range?.lowerBound)
         .add(range: node.value.range)
       return
@@ -349,7 +349,7 @@ public final class TypeChecker: Visitor {
   public func visit(_ node: StoreStmt) {
     // Determine the type of the value being stored.
     guard let valueType = type(of: node.value) else {
-      compilerContext.report(message: "cannot determine the type of '\(node.value)'")
+      compilerContext.report(message: "cannot determine the type of expression '\(node.value)'")
         .set(location: node.value.range?.lowerBound)
         .add(range: node.value.range)
       return

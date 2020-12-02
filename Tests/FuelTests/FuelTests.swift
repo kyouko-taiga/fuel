@@ -59,9 +59,14 @@ class FuelTests: XCTestCase {
         pipeline: [.parse(url), .runSema],
         context: context)
       try driver.execute()
-      XCTAssert(
-        checker.expectations.isEmpty,
-        "Expected error was not raised while processing '\(url.lastPathComponent)'")
+
+      for (line, exp) in checker.expectations {
+        for pattern in exp {
+          XCTFail(
+            "Expected diagnostic was not raised in \(url.lastPathComponent):\(line + 1): " +
+            (pattern.message ?? "_"))
+        }
+      }
     }
   }
 
