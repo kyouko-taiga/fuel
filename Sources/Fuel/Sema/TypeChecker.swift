@@ -41,8 +41,9 @@ public final class TypeChecker: Visitor {
     for decl in namedDecls {
       let symbol = Symbol(decl: decl)
 
-      if decl is ScopeAllocStmt {
-        let a = (gamma[symbol]!.bareType as! LocationType).location
+      if decl is ScopeAllocStmt,
+         let a = (gamma[symbol]?.bareType as? LocationType)?.location
+      {
         gamma[a] = nil
       }
 
@@ -61,6 +62,7 @@ public final class TypeChecker: Visitor {
       quantifiedParams = []
 
     case let ut as UniversalType where ut.base is FuncType:
+      // swiftlint:disable:next force_cast
       funcType = ut.base as! FuncType
       quantifiedParams = ut.params
 
@@ -136,8 +138,9 @@ public final class TypeChecker: Visitor {
     case let ft as FuncType:
       declType = ft
 
-    case let ut as UniversalType where ut.base is FuncType:
-      declType = ut.base as! FuncType
+    case let ut as UniversalType:
+      guard let ft = ut.base as? FuncType else { return }
+      declType = ft
 
     default:
       // Skip the declaration if it doesn't have a valid function type. This can be done silently,

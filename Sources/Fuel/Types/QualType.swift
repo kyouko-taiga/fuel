@@ -27,7 +27,7 @@ public struct QualType {
   /// This type, stripped from the specified qualifiers.
   ///
   /// - Parameter quals: A set of type qualifiers to remove.
-  public func without(_ quals: TypeQualSet) -> QualType{
+  public func without(_ quals: TypeQualSet) -> QualType {
     return QualType(bareType: bareType, quals: self.quals.subtracting(quals))
   }
 

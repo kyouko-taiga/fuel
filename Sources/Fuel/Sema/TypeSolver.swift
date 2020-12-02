@@ -14,7 +14,7 @@ struct TypeSolver {
   let context: TypingContext
 
   /// The set of constraints to solve.
-  var constraints: Array<Constraint>
+  var constraints: [Constraint]
 
   /// The set of universally quantified memory locations. These are the names of the "generic"
   /// locations that should be instantiated with concrete ones, occurring in the typing context.
@@ -95,10 +95,9 @@ struct TypeSolver {
       }
     }
 
-    return assumptions.map(
-      { (key, value) in
-        (substitutions[key] ?? key, value.substituting(substitutions))
-      })
+    return assumptions.map({ (key, value) in
+      (substitutions[key] ?? key, value.substituting(substitutions))
+    })
   }
 
   mutating func unify(_ lhs: QualType, _ rhs: QualType) -> Bool {

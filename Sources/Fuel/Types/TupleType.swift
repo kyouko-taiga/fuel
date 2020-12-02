@@ -10,6 +10,7 @@ public final class TupleType: BareType {
   public let members: [QualType]
 
   public override func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
+    // swiftlint:disable:next force_cast
     return TupleType(members: members.map({ $0.substituting(substitutions) })) as! Self
   }
 

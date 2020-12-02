@@ -23,6 +23,7 @@ public final class TypeRealizer: Visitor {
       funcType = ft
 
     case let ut as UniversalType where ut.base is FuncType:
+      // swiftlint:disable:next force_cast
       funcType = (ut.base as! FuncType)
 
     default:

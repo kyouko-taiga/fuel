@@ -14,7 +14,7 @@ extension URL {
       i += 1
     }
 
-    let rel = Array<String>(repeating: "..", count: rhs.count - i)
+    let rel = [String](repeating: "..", count: rhs.count - i)
     let rem = lhs.dropFirst(i).map(String.init(describing:))
     if rel.isEmpty && rem.isEmpty {
       return "."

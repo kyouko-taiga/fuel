@@ -18,9 +18,11 @@ public final class FuncType: BareType {
   public let output: QualType
 
   public override func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
+    // swiftlint:disable force_cast
     return FuncType(
       params: params.map({ $0.substituting(substitutions) }),
       output: output.substituting(substitutions)) as! Self
+    // swiftlint:enable force_cast
   }
 
 }

@@ -30,7 +30,11 @@ public final class PackedType: BareType {
         (substitutions[key] ?? key, value.substituting(substitutions))
       }))
 
-    return PackedType(base: base.substituting(substitutions), assumptions: newAssumptions) as! Self
+    // swiftlint:disable force_cast
+    return PackedType(
+      base: base.substituting(substitutions),
+      assumptions: newAssumptions) as! Self
+    // swiftlint:enable force_cast
   }
 
 }

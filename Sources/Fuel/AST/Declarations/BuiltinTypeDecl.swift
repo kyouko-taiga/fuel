@@ -18,7 +18,7 @@ public final class BuiltinTypeDecl: NominalTypeDecl {
 
   public let range: SourceRange?
 
-  public func accept<V>(_ visitor: V) where V : Visitor {
+  public func accept<V>(_ visitor: V) where V: Visitor {
     visitor.visit(self)
   }
 

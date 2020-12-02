@@ -28,7 +28,7 @@ func || <P, Q>(lhs: P, rhs: Q) -> EitherParser<P, Q> where P: Parser, Q: Parser 
 
 extension Parser {
 
-  static postfix func +(parser: Self) -> CombineParser<Self, ManyParser<Self>, [Self.Element]> {
+  static postfix func + (parser: Self) -> CombineParser<Self, ManyParser<Self>, [Self.Element]> {
     return parser.oneOrMany
   }
 

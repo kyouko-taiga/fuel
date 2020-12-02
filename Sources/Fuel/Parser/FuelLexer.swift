@@ -1,3 +1,5 @@
+// swiftlint:disable comma cyclomatic_complexity
+
 /// An iterator that tokenizes the contents of a source file.
 public struct FuelLexer: IteratorProtocol, Sequence {
 

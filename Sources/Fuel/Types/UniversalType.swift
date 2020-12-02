@@ -12,9 +12,11 @@ public final class UniversalType: BareType {
   public let params: [QuantifiedParam]
 
   public override func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
+    // swiftlint:disable force_cast
     return UniversalType(
       base: base.substituting(substitutions),
       params: params) as! Self
+    // swiftlint:enable force_cast
   }
 
 }

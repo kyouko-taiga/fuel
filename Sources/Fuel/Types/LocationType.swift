@@ -13,7 +13,6 @@ public final class LocationType: BareType {
   /// The type's unique inhabitant.
   public let location: Symbol
 
-
   public override func isEqual(to other: BareType) -> Bool {
     guard let rhs = other as? LocationType else {
       return false
@@ -22,6 +21,7 @@ public final class LocationType: BareType {
   }
 
   public override func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
+    // swiftlint:disable force_cast
     return LocationType(location: substitutions[location] ?? location) as! Self
   }
 
