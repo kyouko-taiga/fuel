@@ -10,7 +10,7 @@ public final class FuncDecl: NamedDecl, DeclContext {
   ///   - params: The function's parameters.
   ///   - sign: The signature of the function's type.
   ///   - body: The function's body.
-  public init(name: String, params: [FuncParamDecl], sign: TypeSign, body: Block?) {
+  public init(name: String, params: [FuncParamDecl], sign: TypeSign, body: BraceStmt?) {
     self.name = name
     self.params = params
     self.sign = sign
@@ -27,7 +27,7 @@ public final class FuncDecl: NamedDecl, DeclContext {
   public var sign: TypeSign
 
   /// The function's body.
-  public var body: Block?
+  public var body: BraceStmt?
 
   /// The function's semantic type.
   public var type: QualType?

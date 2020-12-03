@@ -27,7 +27,7 @@ public final class TypeChecker: Visitor {
   /// The type of the function being type-checked.
   private var funcType: FuncType!
 
-  public func visit(_ node: Block) {
+  public func visit(_ node: BraceStmt) {
     // Type-check each statement in the block.
     var namedDecls: [NamedDecl] = []
     for stmt in node.stmts {

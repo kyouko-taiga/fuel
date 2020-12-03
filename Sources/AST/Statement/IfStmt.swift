@@ -2,7 +2,7 @@ import Basic
 
 public final class IfStmt: Stmt {
 
-  public init(cond: Expr, thenBody: Block, elseBody: Block?) {
+  public init(cond: Expr, thenBody: BraceStmt, elseBody: BraceStmt?) {
     self.cond = cond
     self.thenBody = thenBody
     self.elseBody = elseBody
@@ -10,9 +10,9 @@ public final class IfStmt: Stmt {
 
   public var cond: Expr
 
-  public var thenBody: Block
+  public var thenBody: BraceStmt
 
-  public var elseBody: Block?
+  public var elseBody: BraceStmt?
 
   public var range: SourceRange?
 

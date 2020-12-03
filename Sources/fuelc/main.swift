@@ -1,5 +1,6 @@
 import Foundation
 
+import AST
 import Basic
 import Fuel
 
@@ -20,7 +21,8 @@ func main() throws {
 
   // Dump the compiled module.
   if let module = driver.module {
-    print(module)
+    let dumper = ASTDumper(output: FileOutputStream.stdout)
+    dumper.visit(module)
   }
 }
 

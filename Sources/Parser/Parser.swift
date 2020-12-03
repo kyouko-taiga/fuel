@@ -79,10 +79,10 @@ public enum Parser {
       +> newlines
       ++ (stmtList +> newlines).optional
       ++ t(.rightBrace))
-    .map({ (tree) -> Block in
+    .map({ (tree) -> BraceStmt in
       let ((lead, body), trail) = tree
 
-      let block = Block(stmts: body ?? [])
+      let block = BraceStmt(stmts: body ?? [])
       block.range = lead.range.lowerBound ..< trail.range.upperBound
       return block
     })

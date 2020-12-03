@@ -18,13 +18,13 @@ let package = Package(
     .target(name: "fuelc", dependencies: ["Fuel", "Diagnostic"]),
     .target(
       name: "Fuel",
-      dependencies: ["AST", "Basic", "Lexer", "LLVMCodeGen", "Parser", "Sema"]),
+      dependencies: ["AST", "Basic", "Lexer", /* "LLVMCodeGen", */ "Parser", "Sema"]),
 
     .target(name: "AST", dependencies: ["Basic", "Diagnostic"]),
     .target(name: "Basic"),
     .target(name: "Diagnostic", dependencies: ["Basic"]),
     .target(name: "Lexer", dependencies: ["Basic"]),
-    .target(name: "LLVMCodeGen", dependencies: ["AST", "LLVM"]),
+    // .target(name: "LLVMCodeGen", dependencies: ["AST", "LLVM"]),
     .target(name: "Parser", dependencies: ["Diesel", "AST", "Lexer"]),
     .target(name: "Sema", dependencies: ["AST"]),
 

@@ -1,7 +1,7 @@
 import Basic
 
 /// A block of statements.
-public final class Block: DeclContext {
+public final class BraceStmt: DeclContext {
 
   public init(stmts: [Stmt]) {
     self.stmts = stmts
@@ -23,7 +23,7 @@ public final class Block: DeclContext {
 
 }
 
-extension Block: MutableCollection {
+extension BraceStmt: MutableCollection {
 
   public var startIndex: Int { 0 }
 
@@ -40,7 +40,7 @@ extension Block: MutableCollection {
 
 }
 
-extension Block: CustomStringConvertible {
+extension BraceStmt: CustomStringConvertible {
 
   public var description: String {
     let body = stmts

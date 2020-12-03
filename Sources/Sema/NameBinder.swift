@@ -24,7 +24,7 @@ public final class NameBinder: Visitor {
     traverse(node)
   }
 
-  public func visit(_ node: Block) {
+  public func visit(_ node: BraceStmt) {
     node.parent = declContext
     declContext = node
     traverse(node)
