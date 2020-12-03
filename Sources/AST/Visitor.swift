@@ -41,7 +41,7 @@ public protocol Visitor {
 
   func visit(_ node: LocationSign)
 
-  func visit(_ node: PackedSign)
+  func visit(_ node: BundledSign)
 
   func visit(_ node: AssumptionSign)
 
@@ -361,14 +361,14 @@ extension Visitor {
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to visit.
-  public func visit(_ node: PackedSign) {
+  public func visit(_ node: BundledSign) {
     traverse(node)
   }
 
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to traverse.
-  @inlinable public func traverse(_ node: PackedSign) {
+  @inlinable public func traverse(_ node: BundledSign) {
     node.base.accept(self)
     node.assumptions.forEach({ $0.accept(self) })
   }

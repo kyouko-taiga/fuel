@@ -188,9 +188,9 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << ")"
   }
 
-  public func visit(_ node: PackedSign) {
+  public func visit(_ node: BundledSign) {
     self << lead
-    self << "(PackedSign"
+    self << "(BundledSign"
 
     if let type = node.type {
       self << " type=\"\(type)\""

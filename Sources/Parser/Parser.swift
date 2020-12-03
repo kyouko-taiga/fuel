@@ -258,7 +258,7 @@ public enum Parser {
   static let universalSign = (
     t(.universal)
       ++ quantifiedParamDeclList
-      ++ (t(.dot) >+ packedSign))
+      ++ (t(.dot) >+ bundledSign))
     .map({ (tree) -> TypeSign in
       let ((lead, params), base) = tree
 
@@ -275,7 +275,7 @@ public enum Parser {
       ++ funcParamSignList.optional
       +> t(.rightParen)
       +> t(.arrow)
-      ++ packedSign)
+      ++ bundledSign)
     .map({ (tree) -> FuncSign in
       let ((lead, params), output) = tree
       let sign = FuncSign(params: params ?? [], output: output)
@@ -283,12 +283,12 @@ public enum Parser {
       return sign
     })
 
-  static let funcParamSignList = (packedSign ++ (t(.comma) >+ packedSign).many)
+  static let funcParamSignList = (bundledSign ++ (t(.comma) >+ bundledSign).many)
     .map({ (head, tail) -> [TypeSign] in
       return [head] + tail
     })
 
-  static let packedSign = (
+  static let bundledSign = (
     qualifierList.optional
       ++ atomSign
       ++ (t(.plus) >+ assumption).many)
@@ -300,7 +300,7 @@ public enum Parser {
       var sign = base
 
       if !assumptions.isEmpty {
-        sign = PackedSign(base: base, assumptions: assumptions)
+        sign = BundledSign(base: base, assumptions: assumptions)
         sign.range = base.range!.lowerBound ..< assumptions.last!.range!.upperBound
       }
 

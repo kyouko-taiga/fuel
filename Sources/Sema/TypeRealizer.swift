@@ -77,7 +77,7 @@ public final class TypeRealizer: Visitor {
     }
   }
 
-  public func visit(_ node: PackedSign) {
+  public func visit(_ node: BundledSign) {
     // Traverse the node to realize the type of the base signature and that of each assumption.
     traverse(node)
 
@@ -108,7 +108,7 @@ public final class TypeRealizer: Visitor {
     }
 
     // Build the extended type.
-    node.type = QualType(bareType: PackedType(base: base.bareType, assumptions: assumptions))
+    node.type = QualType(bareType: BundledType(base: base.bareType, assumptions: assumptions))
   }
 
   public func visit(_ node: TupleSign) {

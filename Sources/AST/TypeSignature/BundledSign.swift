@@ -1,7 +1,7 @@
 import Basic
 
-/// A type signature packed with assumptions about the typing environment.
-public final class PackedSign: TypeSign {
+/// A type signature bundled with assumptions about the typing environment.
+public final class BundledSign: TypeSign {
 
   public init(base: TypeSign, assumptions: [AssumptionSign]) {
     self.base = base
@@ -22,7 +22,7 @@ public final class PackedSign: TypeSign {
 
 }
 
-extension PackedSign: CustomStringConvertible {
+extension BundledSign: CustomStringConvertible {
 
   public var description: String {
     guard !assumptions.isEmpty

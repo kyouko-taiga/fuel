@@ -31,10 +31,10 @@ public struct QualType {
     return QualType(bareType: bareType, quals: self.quals.subtracting(quals))
   }
 
-  /// The (qualified) base of the underlying packed type, separated from its assumptions.
-  public var unpacked: (base: QualType, assumptions: TypingContext)? {
-    if let packed = bareType as? PackedType {
-      return (QualType(bareType: packed.base, quals: quals), packed.assumptions)
+  /// The (qualified) base of the underlying bundled type, separated from its assumptions.
+  public var opened: (base: QualType, assumptions: TypingContext)? {
+    if let bundle = bareType as? BundledType {
+      return (QualType(bareType: bundle.base, quals: quals), bundle.assumptions)
     } else {
       return nil
     }

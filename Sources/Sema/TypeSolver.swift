@@ -72,12 +72,12 @@ struct TypeSolver {
       }
 
       // Unpack types if necessary.
-      if let (tau, eta) = lhs.unpacked {
+      if let (tau, eta) = lhs.opened {
         lhs = tau
         constraints.append(
           contentsOf: eta.map({ Constraint(lhs: .ref($0.key), rhs: .type($0.value)) }))
       }
-      if let (tau, eta) = rhs.unpacked {
+      if let (tau, eta) = rhs.opened {
         rhs = tau
         assumptions.append(contentsOf: eta)
         constraints.append(
