@@ -99,25 +99,30 @@ public enum Parser {
       let lowerBound = name.range.lowerBound
 
       switch tail {
-      case .salloc(sign: let sign):
+      case .salloc(let sign):
         let stmt = ScopeAllocStmt(name: String(name.value), sign: sign)
         stmt.range = lowerBound ..< sign.range!.upperBound
         return stmt
 
-      case .load(valueRef: let valueRef):
+      case .load(let valueRef):
         let stmt = LoadStmt(name: String(name.value), valueRef: valueRef)
         stmt.range = lowerBound ..<  valueRef.range!.upperBound
         return stmt
 
-      case .call(ident: let ident, args: let args):
+      case .call(let ident, let args):
         let stmt = CallStmt(name: String(name.value), ident: ident, args: args)
         let upperBound = args.last?.range!.upperBound ?? ident.range!.upperBound
         stmt.range = lowerBound ..< upperBound
         return stmt
+
+      case .addr(let path):
+        let stmt = AddrStmt(name: String(name.value), path: path)
+        stmt.range = lowerBound ..< path.range!.upperBound
+        return stmt
       }
     })
 
-  static let stmtTail = (sallocTail || loadTail || callTail)
+  static let stmtTail = (sallocTail || loadTail || callTail || addrTail)
 
   static let sallocTail = (t(.salloc) >+ typeSign)
     .map({ sign in
@@ -137,6 +142,11 @@ public enum Parser {
   static let argList = (expr ++ (t(.comma) >+ expr).many)
     .map({ head, tail in
       [head] + tail
+    })
+
+  static let addrTail = (t(.addr) >+ memberExpr)
+    .map({ path in
+      StmtTail.addr(path: path)
     })
 
   static let free = (t(.free) ++ ident)
@@ -179,13 +189,19 @@ public enum Parser {
 
   static let elseBody = (t(.else_) >+ newlines >+ block)
 
-  static let expr = (atom ++ (t(.dot) >+ t(.integer)).many)
-    .map({ (base, offsets) -> Expr in
-      return offsets.reduce(base, { (base, offset) -> Expr in
-        let e = MemberExpr(base: base, offset: Int(offset.value)!)
-        e.range = e.range!.lowerBound ..< offset.range.upperBound
-        return e as Expr
-      })
+  static let expr = memberExpr.map({ $0 as Expr }).or(atom)
+
+  static let memberExpr = (ident ++ (t(.dot) >+ t(.integer)).oneOrMany)
+    .map({ (base, offsets) -> MemberExpr in
+      var expr = MemberExpr(base: base, offset: Int(offsets[0].value)!)
+      expr.range = base.range!.lowerBound ..< offsets[0].range.upperBound
+
+      for offset in offsets[1...] {
+        expr = MemberExpr(base: expr, offset: Int(offset.value)!)
+        expr.range = expr.base.range!.lowerBound ..< offset.range.upperBound
+      }
+
+      return expr
     })
 
   static let atom =
@@ -366,6 +382,8 @@ enum StmtTail {
   case load(valueRef: Expr)
 
   case call(ident: IdentExpr, args: [Expr])
+
+  case addr(path: MemberExpr)
 
 }
 
