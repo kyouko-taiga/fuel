@@ -11,7 +11,7 @@ public final class Driver {
 
   public init(
     sourceManager: SourceManager,
-    pipeline: [CompilerAction],
+    pipeline: [CompilerAction] = [],
     context: CompilerContext = CompilerContext()
   ) {
     self.pipeline = pipeline
