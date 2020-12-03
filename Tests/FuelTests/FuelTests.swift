@@ -3,7 +3,7 @@ import XCTest
 import Basic
 import Fuel
 
-fileprivate let testsURL = URL(fileURLWithPath: #file)
+private let testsURL = URL(fileURLWithPath: #file)
   .deletingLastPathComponent()
 
 class FuelTests: XCTestCase {

@@ -1,7 +1,5 @@
 import Basic
 
-import Basic
-
 /// The signature of a location type.
 public final class LocationSign: TypeSign {
 
