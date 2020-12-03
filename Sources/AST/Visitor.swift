@@ -21,6 +21,8 @@ public protocol Visitor {
 
   func visit(_ node: CallStmt)
 
+  func visit(_ node: AddrStmt)
+
   func visit(_ node: ReturnStmt)
 
   func visit(_ node: IfStmt)
@@ -211,6 +213,20 @@ extension Visitor {
   @inlinable public func traverse(_ node: CallStmt) {
     node.ident.accept(self)
     node.args.forEach({ $0.accept(self) })
+  }
+
+  /// Traverses the specified node, visiting each of its children.
+  ///
+  /// - Parameter node: The node to visit.
+  public func visit(_ node: AddrStmt) {
+    traverse(node)
+  }
+
+  /// Traverses the specified node, visiting each of its children.
+  ///
+  /// - Parameter node: The node to traverse.
+  @inlinable public func traverse(_ node: AddrStmt) {
+    node.path.accept(self)
   }
 
   /// Traverses the specified node, visiting each of its children.

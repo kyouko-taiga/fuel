@@ -13,6 +13,14 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
   /// The leading spaces to display before each new line.
   private var lead: String { String(repeating: " ", count: level) }
 
+  public func visit(_ node: AddrStmt) {
+    self << lead
+    self << "(AddrStmt \"\(node.symbol)\""
+    self << "\n"
+    withInc { node.path.accept(self) }
+    self << ")"
+  }
+
   public func visit(_ node: AssumptionSign) {
     self << lead
     self << "(AssumpSign"
