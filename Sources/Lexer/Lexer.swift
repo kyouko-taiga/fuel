@@ -2,25 +2,25 @@
 import Basic
 
 /// An iterator that tokenizes the contents of a source file.
-public struct Lexer: IteratorProtocol, Sequence {
+public struct Lexer: IteratorProtocol, Sequence, StreamProcessor {
 
   /// Creates a new lexer for the given source file.
   ///
   /// - Parameter source: A source file.
   public init(source: SourceFile) {
     self.source = source
-    self.contents = source.contents
-    self.index = contents.startIndex
+    self.input = source.contents
+    self.index = input.startIndex
   }
 
   /// The source file being tokenized.
   private let source: SourceFile
 
   /// The contents of the file being tokenized.
-  private let contents: String
+  public let input: String
 
   /// The index from which the file is being tokenized.
-  private var index: String.Index
+  public var index: String.Index
 
   /// A boolean value that indicates whether the source file has been completed processed.
   private var depleted = false
@@ -40,7 +40,7 @@ public struct Lexer: IteratorProtocol, Sequence {
     // Lex the end of file.
     guard let ch = peek() else {
       depleted = true
-      return Token(kind: .eof, value: contents[index ..< index], source: source)
+      return Token(kind: .eof, value: input[index ..< index], source: source)
     }
 
     let start = index
@@ -48,13 +48,13 @@ public struct Lexer: IteratorProtocol, Sequence {
     // Merge new lines with subsequent whitespaces.
     if ch.isNewline {
       take(while: { $0.isWhitespace })
-      return Token(kind: .newline, value: contents[start ... start], source: source)
+      return Token(kind: .newline, value: input[start ... start], source: source)
     }
 
     // Lex identifiers and keywords.
     if ch.isLetter || ch == "_" {
       let identifier = take(while: { $0.isLetter || $0.isDigit || $0 == "_" })
-      let value = contents[start ..< index]
+      let value = input[start ..< index]
 
       switch identifier {
       case "return":
@@ -98,13 +98,13 @@ public struct Lexer: IteratorProtocol, Sequence {
     if peek() == "@" {
       take()
       take(while: { $0.isLetter })
-      return Token(kind: .qualifier, value: contents[start ..< index], source: source)
+      return Token(kind: .qualifier, value: input[start ..< index], source: source)
     }
 
     // Lex number literals.
     if ch.isNumber {
       take(while: { $0.isDigit })
-      return Token(kind: .integer, value: contents[start ..< index], source: source)
+      return Token(kind: .integer, value: input[start ..< index], source: source)
     }
 
     // Lex operators and punctuation.
@@ -119,7 +119,7 @@ public struct Lexer: IteratorProtocol, Sequence {
 
     if let k = kind {
       take(n: 2)
-      return Token(kind: k, value: contents[start ..< index], source: source)
+      return Token(kind: k, value: input[start ..< index], source: source)
     }
 
     switch peek() {
@@ -142,67 +142,20 @@ public struct Lexer: IteratorProtocol, Sequence {
 
     if let k = kind {
       take()
-      return Token(kind: k, value: contents[start ..< index], source: source)
+      return Token(kind: k, value: input[start ..< index], source: source)
     }
 
     take()
-    return Token(kind: .unknown, value: contents[start ..< index], source: source)
-  }
-
-  private func peek() -> Character? {
-    guard index < contents.endIndex
-      else { return nil }
-    return contents[index]
-  }
-
-  private func peek(at offset: Int) -> Character? {
-    let position = contents.index(index, offsetBy: offset)
-    guard position < contents.endIndex
-      else { return nil }
-    return contents[position]
-  }
-
-  private func peek(n: Int) -> Substring {
-    return contents.suffix(from: index).prefix(n)
-  }
-
-  private func peek(while predicate: (Character) -> Bool) -> Substring {
-    return contents.suffix(from: index).prefix(while: predicate)
+    return Token(kind: .unknown, value: input[start ..< index], source: source)
   }
 
   @discardableResult
-  private mutating func take() -> Character {
-    let character = contents[index]
-    index = contents.index(after: index)
-    return character
-  }
-
-  @discardableResult
-  private mutating func take(n: Int) -> Substring {
-    let characters = contents.suffix(from: index).prefix(n)
-    index = contents.index(index, offsetBy: characters.count)
-    return characters
-  }
-
-  @discardableResult
-  private mutating func take(while predicate: (Character) -> Bool) -> Substring {
-    var end = index
-    while end < contents.endIndex && predicate(contents[end]) {
-      end = contents.index(after: end)
-    }
-
-    let characters = contents[index ..< end]
-    index = end
-    return characters
-  }
-
-  @discardableResult
-  private mutating func take(substring: String) -> Substring? {
-    guard contents[index...] == substring
+  public mutating func take(substring: String) -> Substring? {
+    guard input[index...] == substring
       else { return nil }
 
-    let end = contents.index(index, offsetBy: substring.count)
-    let characters = contents[index ..< end]
+    let end = input.index(index, offsetBy: substring.count)
+    let characters = input[index ..< end]
     index = end
     return characters
   }
