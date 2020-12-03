@@ -159,6 +159,14 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << ")"
   }
 
+  public func visit(_ node: MemberExpr) {
+    self << lead
+    self << "(MemberExpr offset=\(node.offset)"
+    self << "\n"
+    withInc { node.base.accept(self) }
+    self << ")"
+  }
+
   public func visit(_ node: Module) {
     self << lead
     self << "(Module"
@@ -220,6 +228,22 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     withInc { node.value.accept(self) }
     self << "\n"
     withInc { node.ident.accept(self) }
+    self << ")"
+  }
+
+  public func visit(_ node: TupleSign) {
+    self << lead
+    self << "(TupleSign"
+
+    if let type = node.type {
+      self << " type=\"\(type)\""
+    }
+
+    for member in node.members {
+      self << "\n"
+      withInc { member.accept(self) }
+    }
+
     self << ")"
   }
 
