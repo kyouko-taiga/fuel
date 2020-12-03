@@ -1,4 +1,7 @@
 import XCTest
+
+import Basic
+import Diagnostic
 import Fuel
 
 class DiagnosticChecker: DiagnosticConsumer {

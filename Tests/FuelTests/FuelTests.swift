@@ -1,4 +1,6 @@
 import XCTest
+
+import Basic
 import Fuel
 
 fileprivate let testsURL = URL(fileURLWithPath: #file)
@@ -51,13 +53,9 @@ class FuelTests: XCTestCase {
       }
 
       let checker = DiagnosticChecker(sourceManager: srcManager, expectations: expectations)
-      let context = CompilerContext()
-      context.diagnosticConsumer = checker
+      let driver = Driver(sourceManager: srcManager, pipeline: [.parse(url), .runSema])
+      driver.context.diagnosticConsumer = checker
 
-      let driver = Driver(
-        sourceManager: srcManager,
-        pipeline: [.parse(url), .runSema],
-        context: context)
       try driver.execute()
 
       for (line, exp) in checker.expectations {

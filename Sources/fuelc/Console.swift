@@ -1,4 +1,7 @@
 import Foundation
+
+import Basic
+import Diagnostic
 import Fuel
 
 struct Console: DiagnosticConsumer {

@@ -1,12 +1,18 @@
 import Foundation
 
+import AST
+import Basic
+import Lexer
+import Parser
+import Sema
+
 /// A driver that runs a pipeline of compilation actions.
 public final class Driver {
 
   public init(
     sourceManager: SourceManager,
     pipeline: [CompilerAction],
-    context: CompilerContext
+    context: CompilerContext = CompilerContext()
   ) {
     self.pipeline = pipeline
     self.sourceManager = sourceManager
@@ -55,12 +61,12 @@ public final class Driver {
   }
 
   public func parse(url: URL) throws {
-    FuelParser.initialize()
+    Parser.initialize()
 
-    let lexer = FuelLexer(source: try sourceManager.load(contentsOf: url))
+    let lexer = Lexer(source: try sourceManager.load(contentsOf: url))
     let tokens = Array(lexer)
 
-    guard case .success(let decls, _) = FuelParser.decls.parse(tokens[0...]) else { return }
+    guard case .success(let decls, _) = Parser.decls.parse(tokens[0...]) else { return }
     module = Module(
       id: url.absoluteString,
       typeDecls: [],

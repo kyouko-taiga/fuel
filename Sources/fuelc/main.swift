@@ -1,5 +1,11 @@
 import Fuel
 
+import AST
+import Basic
+import Lexer
+import Parser
+import Sema
+
 func main() throws {
 //  let input = """
 //  // func f(_: UnsafeMutablePointer<Int>) {}
@@ -37,11 +43,11 @@ func main() throws {
 
   let input = try sourceManager.load(contentsOf: "Hello.fuel")
 
-  let lexer = FuelLexer(source: input)
+  let lexer = Lexer(source: input)
   let tokens = Array(lexer)
 
-  FuelParser.initialize()
-  switch FuelParser.decls.parse(tokens[0...]) {
+  Parser.initialize()
+  switch Parser.decls.parse(tokens[0...]) {
   case .success(let decls, let rem):
     if rem.first?.kind != .eof {
       print("error: the parser didn't consume the entire stream.")
