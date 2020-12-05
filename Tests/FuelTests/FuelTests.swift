@@ -20,11 +20,11 @@ class FuelTests: XCTestCase {
       return
     }
 
-    let srcManager = try SourceManager()
+    let sourceManager = SourceManager()
 
     for case let url as URL in enumerator where url.pathExtension == "fuel" {
       // Load the source file.
-      guard let source = try? srcManager.load(contentsOf: url) else {
+      guard let source = try? sourceManager.load(contentsOf: url) else {
         XCTFail("Failed to load '\(url)'")
         continue
       }
@@ -52,8 +52,8 @@ class FuelTests: XCTestCase {
         }
       }
 
-      let checker = DiagnosticChecker(sourceManager: srcManager, expectations: expectations)
-      let driver = Driver(sourceManager: srcManager, pipeline: [.parse(url), .runSema])
+      let checker = DiagnosticChecker(sourceManager: sourceManager, expectations: expectations)
+      let driver = Driver(sourceManager: sourceManager, pipeline: [.parse(url), .runSema])
       driver.context.diagnosticConsumer = checker
 
       try driver.execute()

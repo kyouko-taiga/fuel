@@ -9,22 +9,15 @@ import Sema
 /// A driver that runs a pipeline of compilation actions.
 public final class Driver {
 
+  /// Create a new compilation driver.
   public init(
-    sourceManager: SourceManager,
+    sourceManager: SourceManager = SourceManager(),
     pipeline: [CompilerAction] = [],
     context: CompilerContext = CompilerContext()
   ) {
     self.pipeline = pipeline
     self.sourceManager = sourceManager
     self.context = context
-  }
-
-  /// Create a new compilation driver.
-  public convenience init(pipeline: [CompilerAction] = []) throws {
-    self.init(
-      sourceManager: try SourceManager(),
-      pipeline: pipeline,
-      context: CompilerContext())
   }
 
   /// The driver's pipeline.

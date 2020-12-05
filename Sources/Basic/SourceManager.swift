@@ -4,19 +4,8 @@ import Foundation
 public final class SourceManager {
 
   /// Creates a new local source manager.
-  public init() throws {
-    let manager = FileManager.default
-    let currentDirectoryURL = URL(fileURLWithPath: manager.currentDirectoryPath, isDirectory: true)
-
-    temporaryDirectoryURL = try manager.url(
-      for: .itemReplacementDirectory,
-      in: .userDomainMask,
-      appropriateFor: currentDirectoryURL,
-      create: true)
+  public init() {
   }
-
-  /// The URL of a temporary directory.
-  private let temporaryDirectoryURL: URL
 
   /// A file content cache.
   private var contentCache: [URL: String] = [:]
@@ -55,7 +44,7 @@ public final class SourceManager {
   ///
   /// - Parameter string: A character string with the contents of the source file.
   public func load(string: String) -> SourceFile {
-    let url = temporaryDirectoryURL.appendingPathComponent(UUID().uuidString)
+    let url = URL(string: "memory://" + UUID().uuidString)!
     contentCache[url] = string
     return SourceFile(manager: self, url: url)
   }
