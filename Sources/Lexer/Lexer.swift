@@ -26,30 +26,23 @@ public struct Lexer: IteratorProtocol, Sequence, StreamProcessor {
   private var depleted = false
 
   public mutating func next() -> Token? {
-    guard !depleted
-      else { return nil }
-
-    // Ignore whitespaces.
-    take(while: { $0.isWhitespace && !$0.isNewline })
-
-    // Ignore comments.
-    if peek(n: 2) == "//" {
-      take(while: { !$0.isNewline })
-    }
-
-    // Lex the end of file.
-    guard let ch = peek() else {
-      depleted = true
-      return Token(kind: .eof, value: input[index ..< index], source: source)
-    }
-
-    let start = index
-
-    // Merge new lines with subsequent whitespaces.
-    if ch.isNewline {
+    while index < input.endIndex {
+      // Skip all leading whitespace characters.
       take(while: { $0.isWhitespace })
-      return Token(kind: .newline, value: input[start ... start], source: source)
+
+      // Skip the remainder of the line if we recognized a comment.
+      if peek(n: 2) == "//" {
+        take(while: { !$0.isNewline })
+        continue
+      }
+
+      // The stream now starts with a
+      break
     }
+
+    guard let ch = peek() else { return nil }
+    assert(!ch.isWhitespace)
+    let start = index
 
     // Lex identifiers and keywords.
     if ch.isLetter || ch == "_" {

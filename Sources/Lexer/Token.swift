@@ -11,6 +11,11 @@ public struct Token {
   /// The source file from which the token originates.
   public let source: SourceFile
 
+  /// Whether the token is followed by a new line.
+  public var isFollowedByNewline: Bool {
+    return (value.endIndex < value.base.endIndex) && value.base[value.endIndex].isNewline
+  }
+
   /// The range of the token in the source file.
   @inlinable public var range: SourceRange {
     return source.location(at: value.startIndex) ..< source.location(at: value.endIndex)
@@ -110,8 +115,6 @@ public struct Token {
     case rightBrace
 
     case newline
-
-    case eof
 
     case unknown
 

@@ -54,12 +54,14 @@ public final class Driver {
   }
 
   public func parse(url: URL) throws {
-    Parser.initialize()
-
     let lexer = Lexer(source: try sourceManager.load(contentsOf: url))
-    let tokens = Array(lexer)
+    var parser = Parser(context: context, input: lexer)
 
-    guard case .success(let decls, _) = Parser.decls.parse(tokens[0...]) else { return }
+    var decls: [FuncDecl] = []
+    while let decl = parser.parseTopLevelDecl() {
+      decls.append(decl)
+    }
+
     module = Module(
       id: url.absoluteString,
       typeDecls: [],

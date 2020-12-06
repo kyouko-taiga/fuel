@@ -1,404 +1,612 @@
-import Diesel
-
 import AST
+import Basic
+import Diagnostic
 import Lexer
 
-public enum Parser {
+/// A recursive descent (a.k.a. top-down) parser that builds an AST from a sequence of tokens.
+///
+/// The implementation essentially corresponds to a LL(1) parser with some custom logic to remove
+/// left recursion and avoid backtracking.
+public struct Parser: StreamProcessor {
 
-  public static var isInitialized = false
-
-  public static func initialize() {
-    guard !isInitialized else { return }
-    isInitialized = true
-
-    stmt.define(
-         varDecl
-      || free   .map({ $0 as Stmt })
-      || store  .map({ $0 as Stmt })
-      || return_.map({ $0 as Stmt })
-      || if_    .map({ $0 as Stmt }))
-
-    typeSign.define(
-         funcSign.map({ $0 as TypeSign })
-      || universalSign
-      || atomSign)
-
-    atomSign.define(
-         identSign    .map({ $0 as TypeSign })
-      || locationSign .map({ $0 as TypeSign })
-      || pointerSign  .map({ $0 as TypeSign })
-      || tupleSign    .map({ $0 as TypeSign })
-      || typeSign.parenthesized)
+  /// Creates a new parser.
+  ///
+  /// - Parameters:
+  ///   - context: The AST context in which the parser executes.
+  ///   - input: A sequence of tokens. `input` is enumerated during initialization; therefore it
+  ///     must be a finite sequence.
+  public init<S>(context: CompilerContext, input: S) where S: Sequence, S.Element == Token {
+    self.context = context
+    self.input = Array(input)
   }
 
-  public static let decls = funcDecl.surrounded(by: newlines).many
+  /// The compiler context in the parser runs.
+  public let context: CompilerContext
 
-  static let funcDecl = (funcHead ++ block.surrounded(by: newlines).optional)
-    .map({ (decl, body) -> FuncDecl in
-      if let b = body {
-        decl.body = b
-        decl.range = decl.range!.lowerBound ..< b.range!.upperBound
+  public var input: [Token]
+
+  public var index = 0
+
+  // MARK: Declarations
+
+  /// Parses a top level declaration.
+  public mutating func parseTopLevelDecl() -> FuncDecl? {
+    while index < input.endIndex {
+      do {
+        return try parseFuncDecl()
+      } catch {
+        // Report the parse error as a diagnostic.
+        switch error {
+        case let err as ParseError:
+          context.report(message: err.message)
+            .set(location: err.range?.lowerBound)
+            .add(range: err.range)
+        default:
+          context.report(message: error.localizedDescription)
+        }
+
+        // Attempt to recover at the start of the next top-level declaration.
+        take(while: { $0.kind != .func_ })
       }
-      return decl
-    })
+    }
 
-  static let funcHead = (
-    (t(.func_)
-      ++ t(.name)
-      ++ funcParamDeclList.optional.parenthesized
-      ++ (t(.colon) >+ typeSign)))
-    .map({ (tree) -> FuncDecl in
-      let (((lead, name), params), sign) = tree
+    // The parser reached the end of its input.
+    return nil
+  }
 
-      let decl = FuncDecl(
-        name: String(name.value),
-        params: params ?? [],
-        sign: sign,
-        body: nil)
+  /// Parses a function declaration.
+  public mutating func parseFuncDecl() throws -> FuncDecl {
+    guard let lead = take(.func_) else {
+      throw ParseError(message: "expected 'func'", range: peek()?.range)
+    }
+    guard let name = take(.name) else {
+      throw ParseError(message: "expected function name", range: peek()?.range)
+    }
 
-      decl.range = lead.range.lowerBound ..< sign.range!.upperBound
-      return decl
-    })
+    var params: [FuncParamDecl] = []
+    if take(.leftParen) != nil {
+      let endIndex = input[index...].firstIndex(where: { $0.kind == .rightParen })
+        ?? input.endIndex
+      params = try parseList(
+        until: endIndex,
+        with: { parser in try parser.parseFuncParamDecl() })
 
-  static let funcParamDeclList = (t(.name) ++ (t(.comma) >+ t(.name)).many)
-    .map({ (head, tail) -> [FuncParamDecl] in
-      var decls = [FuncParamDecl(name: String(head.value))]
-      decls[0].range = head.range
+      guard take(.rightParen) != nil else {
+        throw ParseError(message: "expected ')' delimiter", range: peek()?.range)
+      }
+    }
 
-      for token in tail {
-        let decl = FuncParamDecl(name: String(token.value))
-        decl.range = token.range
-        decls.append(decl)
+    guard take(.colon) != nil else {
+      throw ParseError(message: "expected ':' delimiter", range: input.last?.range)
+    }
+
+    let sign = try parseTypeSign()
+
+    let body: BraceStmt?
+    if peek()?.kind == .leftBrace {
+      body = try parseBraceStmt()
+    } else {
+      body = nil
+    }
+
+    let decl = FuncDecl(
+      name: String(name.value),
+      params: params,
+      sign: sign,
+      body: body)
+    decl.range = lead.range.lowerBound ..< (body?.range!.upperBound ?? sign.range!.upperBound)
+    return decl
+  }
+
+  /// Parses the declaration of a function parameter.
+  public mutating func parseFuncParamDecl() throws -> FuncParamDecl {
+    guard let name = take(.name) else {
+      throw ParseError(message: "expected parameter name", range: peek()?.range)
+    }
+
+    let decl = FuncParamDecl(name: String(name.value))
+    decl.range = name.range
+    return decl
+  }
+
+  /// Parses the declaration of a quantified parameter.
+  public mutating func parseQuantParamDecl() throws -> QuantifiedParamDecl {
+    guard let name = take(.name) else {
+      throw ParseError(message: "expected parameter name", range: peek()?.range)
+    }
+
+    let decl = QuantifiedParamDecl(name: String(name.value))
+    decl.range = name.range
+    return decl
+  }
+
+  // MARK: Statements
+
+  /// Parses a statement.
+  public mutating func parseStmt() throws -> Stmt {
+    switch peek()?.kind {
+    case .name:
+      let name = take(.name)!
+      guard take(.equal) != nil else {
+        throw ParseError(message: "expected '='", range: peek()?.range)
       }
 
-      return decls
-    })
+      return try parseStmtTail(name: name)
 
-  static let block = (
-    t(.leftBrace)
-      +> newlines
-      ++ (stmtList +> newlines).optional
-      ++ t(.rightBrace))
-    .map({ (tree) -> BraceStmt in
-      let ((lead, body), trail) = tree
-
-      let block = BraceStmt(stmts: body ?? [])
-      block.range = lead.range.lowerBound ..< trail.range.upperBound
-      return block
-    })
-
-  static let stmtList = (stmt ++ (t(.newline)+ >+ stmt).many)
-    .map({ head, tail in
-      [head] + tail
-    })
-
-  static let stmt = ForwardParser<Stmt, ArraySlice<Token>>()
-
-  static let varDecl = ((t(.name) +> t(.equal)) ++ stmtTail)
-    .map({ (name, tail) -> Stmt in
-      let lowerBound = name.range.lowerBound
-
-      switch tail {
-      case .salloc(let sign):
-        let stmt = ScopeAllocStmt(name: String(name.value), sign: sign)
-        stmt.range = lowerBound ..< sign.range!.upperBound
-        return stmt
-
-      case .load(let valueRef):
-        let stmt = LoadStmt(name: String(name.value), valueRef: valueRef)
-        stmt.range = lowerBound ..<  valueRef.range!.upperBound
-        return stmt
-
-      case .call(let ident, let args):
-        let stmt = CallStmt(name: String(name.value), ident: ident, args: args)
-        let upperBound = args.last?.range!.upperBound ?? ident.range!.upperBound
-        stmt.range = lowerBound ..< upperBound
-        return stmt
-
-      case .addr(let path):
-        let stmt = AddrStmt(name: String(name.value), path: path)
-        stmt.range = lowerBound ..< path.range!.upperBound
-        return stmt
-      }
-    })
-
-  static let stmtTail = (sallocTail || loadTail || callTail || addrTail)
-
-  static let sallocTail = (t(.salloc) >+ typeSign)
-    .map({ sign in
-      StmtTail.salloc(sign: sign)
-    })
-
-  static let loadTail = (t(.load) >+ expr)
-    .map({ valueRef in
-      StmtTail.load(valueRef: valueRef)
-    })
-
-  static let callTail = ((t(.call) >+ ident) ++ (t(.comma) >+ argList).optional)
-    .map({ ident, args in
-      StmtTail.call(ident: ident, args: args ?? [])
-    })
-
-  static let argList = (expr ++ (t(.comma) >+ expr).many)
-    .map({ head, tail in
-      [head] + tail
-    })
-
-  static let addrTail = (t(.addr) >+ memberExpr)
-    .map({ path in
-      StmtTail.addr(path: path)
-    })
-
-  static let free = (t(.free) ++ ident)
-    .map({ (lead, ident) -> FreeStmt in
+    case .free:
+      let lead = take(.free)!
+      let ident = try parseIdentExpr()
       let stmt = FreeStmt(ident: ident)
       stmt.range = lead.range.lowerBound ..< ident.range!.upperBound
       return stmt
-    })
 
-  static let store = ((t(.store) ++ expr) +> t(.comma) ++ ident)
-    .map({ (tree) -> StoreStmt in
-      let ((lead, value), ident) = tree
+    case .store:
+      let lead = take(.store)!
+      let value = try parseExpr()
 
+      guard take(.comma) != nil else {
+        throw ParseError(message: "expected ',' separator", range: peek()?.range)
+      }
+
+      let ident = try parseIdentExpr()
       let stmt = StoreStmt(value: value, ident: ident)
       stmt.range = lead.range.lowerBound ..< ident.range!.upperBound
       return stmt
-    })
 
-  static let return_ = (t(.return_) ++ expr)
-    .map({ (lead, value) -> ReturnStmt in
+    case .return_:
+      let lead = take(.return_)!
+      let value = try parseExpr()
       let stmt = ReturnStmt(value: value)
       stmt.range = lead.range.lowerBound ..< value.range!.upperBound
       return stmt
-    })
 
-  static let if_ = (t(.if_) ++ expr ++ (newlines >+ block) ++ (newlines >+ elseBody).optional)
-    .map({ (tree) -> IfStmt in
-      let (((lead, cond), then_), else_) = tree
+    case .if_:
+      return try parseIfStmt()
 
-      let stmt = IfStmt(cond: cond, thenBody: then_, elseBody: nil)
-      stmt.range = lead.range.lowerBound ..< then_.range!.upperBound
+    case .leftBrace:
+      return try parseBraceStmt()
 
-      if let e = else_ {
-        stmt.elseBody = e
-        stmt.range = lead.range.lowerBound ..< e.range!.upperBound
-      }
-
-      return stmt
-    })
-
-  static let elseBody = (t(.else_) >+ newlines >+ block)
-
-  static let expr = memberExpr.map({ $0 as Expr }).or(atom)
-
-  static let memberExpr = (ident ++ (t(.dot) >+ t(.integer)).oneOrMany)
-    .map({ (base, offsets) -> MemberExpr in
-      var expr = MemberExpr(base: base, offset: Int(offsets[0].value)!)
-      expr.range = base.range!.lowerBound ..< offsets[0].range.upperBound
-
-      for offset in offsets[1...] {
-        expr = MemberExpr(base: expr, offset: Int(offset.value)!)
-        expr.range = expr.base.range!.lowerBound ..< offset.range.upperBound
-      }
-
-      return expr
-    })
-
-  static let atom =
-       junkLit.map({ $0 as Expr })
-    || voidLit.map({ $0 as Expr })
-    || intLit .map({ $0 as Expr })
-    || boolLit.map({ $0 as Expr })
-    || ident  .map({ $0 as Expr })
-
-  static let junkLit = t(.junk)
-    .map({ (value) -> JunkLit in
-      let lit = JunkLit()
-      lit.range = value.range
-      return lit
-    })
-
-  static let voidLit = t(.void)
-    .map({ (value) -> VoidLit in
-      let lit = VoidLit()
-      lit.range = value.range
-      return lit
-    })
-
-  static let boolLit = (t(.true_) || t(.false_))
-    .map({ (value) -> BoolLit in
-      let lit = BoolLit(value: value.value == "true")
-      lit.range = value.range
-      return lit
-    })
-
-  static let intLit = t(.integer)
-    .map({ (integer) -> IntLit in
-      let lit = IntLit(value: Int(integer.value)!)
-      lit.range = integer.range
-      return lit
-    })
-
-  static let ident = t(.name)
-    .map({ (name) -> IdentExpr in
-      let ident = IdentExpr(name: String(name.value))
-      ident.range = name.range
-      return ident
-    })
-
-  static let typeSignList = (typeSign ++ (t(.comma) >+ typeSign).many)
-    .map({ head, tail in
-      [head] + tail
-    })
-
-  static let typeSign = ForwardParser<TypeSign, ArraySlice<Token>>()
-
-  static let atomSign = ForwardParser<TypeSign, ArraySlice<Token>>()
-
-  static let universalSign = (
-    t(.universal)
-      ++ quantifiedParamDeclList
-      ++ (t(.dot) >+ bundledSign))
-    .map({ (tree) -> TypeSign in
-      let ((lead, params), base) = tree
-
-      guard !params.isEmpty
-        else { return base }
-
-      let sign = UniversalSign(base: base, params: params)
-      sign.range = lead.range.lowerBound ..< base.range!.upperBound
-      return sign
-    })
-
-  static let funcSign = (
-    t(.leftParen)
-      ++ funcParamSignList.optional
-      +> t(.rightParen)
-      +> t(.arrow)
-      ++ bundledSign)
-    .map({ (tree) -> FuncSign in
-      let ((lead, params), output) = tree
-      let sign = FuncSign(params: params ?? [], output: output)
-      sign.range = lead.range.lowerBound ..< output.range!.upperBound
-      return sign
-    })
-
-  static let funcParamSignList = (bundledSign ++ (t(.comma) >+ bundledSign).many)
-    .map({ (head, tail) -> [TypeSign] in
-      return [head] + tail
-    })
-
-  static let bundledSign = (
-    qualifierList.optional
-      ++ atomSign
-      ++ (t(.plus) >+ assumption).many)
-    .map({ (tree) -> TypeSign in
-      let ((qualifiers, base), assumptions) = tree
-      guard !assumptions.isEmpty
-        else { return base }
-
-      var sign = base
-
-      if !assumptions.isEmpty {
-        sign = BundledSign(base: base, assumptions: assumptions)
-        sign.range = base.range!.lowerBound ..< assumptions.last!.range!.upperBound
-      }
-
-      if let qualSet = qualifiers?.compactMap(TypeQual.init(token:)) {
-        sign = QualSign(base: sign, qualifiers: qualSet)
-        sign.range = qualifiers!.first!.range.lowerBound ..< sign.range!.upperBound
-      }
-
-      return sign
-    })
-
-  static let identSign = t(.name)
-    .map({ (name) -> IdentSign in
-      let sign = IdentSign(name: String(name.value))
-      sign.range = name.range
-      return sign
-    })
-
-  static let locationSign = (t(.exclamation) ++ ident)
-    .map({ (lead, location) -> LocationSign in
-      let sign = LocationSign(location: location)
-      sign.range = lead.range.lowerBound ..< location.range!.upperBound
-      return sign
-    })
-
-  static let pointerSign = (t(.and) ++ atomSign)
-    .map({ (lead, sign) -> PointerSign in
-      let sign = PointerSign(base: sign)
-      sign.range = lead.range.lowerBound ..< sign.range!.upperBound
-      return sign
-    })
-
-  static let tupleSign = (
-    t(.leftBrace)
-      ++ typeSignList.surrounded(by: newlines)
-      ++ t(.rightBrace))
-    .map({ (tree) -> TupleSign in
-      let ((lead, members), trail) = tree
-
-      let sign = TupleSign(members: members)
-      sign.range = lead.range.lowerBound ..< trail.range.upperBound
-      return sign
-    })
-
-  static let assumption = (t(.leftBracket) ++ (ident +> t(.colon)) ++ typeSign ++ t(.rightBracket))
-    .map({ (tree) -> AssumptionSign in
-      let (((lead, ident), sign), trail) = tree
-
-      let assumption = AssumptionSign(ident: ident, sign: sign)
-      assumption.range = lead.range.lowerBound ..< lead.range.upperBound
-      return assumption
-    })
-
-  static let quantifiedParamDeclList =
-    (quantifiedParamDecl ++ (t(.comma) >+ quantifiedParamDecl).many)
-      .map({ (head, tail) -> [QuantifiedParamDecl] in
-        return [head] + tail
-      })
-
-  static let quantifiedParamDecl = t(.name)
-    .map({ (name) -> QuantifiedParamDecl in
-      let decl = QuantifiedParamDecl(name: String(name.value))
-      decl.range = name.range
-      return decl
-    })
-
-  static let qualifierList = qualifier.oneOrMany
-
-  static let qualifier = t(.qualifier)
-
-  static let newlines = t(.newline).many
-
-}
-
-enum StmtTail {
-
-  case salloc(sign: TypeSign)
-
-  case load(valueRef: Expr)
-
-  case call(ident: IdentExpr, args: [Expr])
-
-  case addr(path: MemberExpr)
-
-}
-
-extension TypeQual {
-
-  init?(token: Token) {
-    switch token.value {
-    case "@unscoped": self = .unscoped
-    case "@copyable": self = .copyable
-    default         : return nil
+    default:
+      throw ParseError(message: "expected statement", range: peek()?.range)
     }
+  }
+
+  /// Parses the tail of a value-binding statement
+  public mutating func parseStmtTail(name: Token) throws -> Stmt {
+    switch peek()?.kind {
+    case .salloc:
+      take(.salloc)
+
+      let sign = try parseTypeSign()
+      let stmt = ScopeAllocStmt(name: String(name.value), sign: sign)
+      stmt.range = name.range.lowerBound ..< sign.range!.upperBound
+      return stmt
+
+    case .load:
+      take(.load)
+
+      let expr = try parseExpr()
+      let stmt = LoadStmt(name: String(name.value), valueRef: expr)
+      stmt.range = name.range.lowerBound ..< expr.range!.upperBound
+      return stmt
+
+    case .call:
+      take(.call)
+
+      let callee = try parseIdentExpr()
+
+      var args: [Expr] = []
+      if take(.comma) != nil {
+        let endIndex = input[index...]
+          .firstIndex(where: { $0.isFollowedByNewline })
+          .map(input.index(after:))
+        args = try parseList(
+          until: endIndex ?? input.endIndex,
+          with: { parser in try parser.parseExpr() })
+      }
+
+      let stmt = CallStmt(name: String(name.value), ident: callee, args: args)
+      let ub = args.last?.range!.upperBound ?? callee.range!.upperBound
+      stmt.range = name.range.lowerBound ..< ub
+      return stmt
+
+    default:
+      throw ParseError(message: "expected value-binding statement keyword", range: peek()?.range)
+    }
+  }
+
+  /// Parses a conditional statement.
+  public mutating func parseIfStmt() throws -> IfStmt {
+    guard let lead = take(.if_) else {
+      throw ParseError(message: "expected 'if'", range: peek()?.range)
+    }
+
+    let cond = try parseExpr()
+    let thenBody = try parseBraceStmt()
+
+    let elseBody: BraceStmt?
+    if take(.else_) != nil {
+      elseBody = try parseBraceStmt()
+    } else {
+      elseBody = nil
+    }
+
+    let stmt = IfStmt(cond: cond, thenBody: thenBody, elseBody: elseBody)
+    let ub = elseBody?.range!.upperBound ?? thenBody.range!.upperBound
+    stmt.range = lead.range.lowerBound ..< ub
+    return stmt
+  }
+
+  /// Parses a brace statement.
+  public mutating func parseBraceStmt() throws -> BraceStmt {
+    guard let lead = take(.leftBrace) else {
+      throw ParseError(message: "expected '{' delimiter", range: peek()?.range)
+    }
+
+    var stmts: [Stmt] = []
+    var trail = take(.rightBrace)
+    while trail == nil {
+      stmts.append(try parseStmt())
+      trail = take(.rightBrace)
+    }
+
+    let stmt = BraceStmt(stmts: stmts)
+    stmt.range = lead.range.lowerBound ..< trail!.range.upperBound
+    return stmt
+  }
+
+  // MARK: Expressions
+
+  /// Parses an expression.
+  public mutating func parseExpr() throws -> Expr {
+    var base: Expr
+    switch peek()?.kind {
+    case .name:
+      base = try parseIdentExpr()
+
+    case .junk:
+      base = try parseJunkLit()
+
+    case .void:
+      base = try parseVoidLit()
+
+    case .true_, .false_:
+      base = try parseBoolLit()
+
+    case .integer:
+      base = try parseIntLit()
+
+    default:
+      throw ParseError(message: "expected expression", range: peek()?.range)
+    }
+
+    while take(.dot) != nil {
+      guard let offset = take(.integer) else {
+        throw ParseError(message: "expected offset", range: peek()?.range)
+      }
+
+      let expr = MemberExpr(base: base, offset: Int(offset.value)!)
+      expr.range = base.range!.lowerBound ..< offset.range.upperBound
+      base = expr
+    }
+
+    return base
+  }
+
+  /// Parses an identifier.
+  public mutating func parseIdentExpr() throws -> IdentExpr {
+    guard let name = take(.name) else {
+      throw ParseError(message: "expected value identifier", range: peek()?.range)
+    }
+
+    let expr = IdentExpr(name: String(name.value))
+    expr.range = name.range
+    return expr
+  }
+
+  /// Parses a junk literal.
+  public mutating func parseJunkLit() throws -> JunkLit {
+    guard let lead = take(.junk) else {
+      throw ParseError(message: "expected 'junk' literal", range: peek()?.range)
+    }
+
+    let expr = JunkLit()
+    expr.range = lead.range
+    return expr
+  }
+
+  /// Parses a void literal.
+  public mutating func parseVoidLit() throws -> VoidLit {
+    guard let lead = take(.void) else {
+      throw ParseError(message: "expected 'void' literal", range: peek()?.range)
+    }
+
+    let expr = VoidLit()
+    expr.range = lead.range
+    return expr
+  }
+
+  /// Parses a Boolean literal.
+  public mutating func parseBoolLit() throws -> BoolLit {
+    guard let lead = (take(.true_) ?? take(.false_)) else {
+      throw ParseError(message: "expected Boolean literal", range: peek()?.range)
+    }
+
+    let expr = BoolLit(value: lead.value == "true")
+    expr.range = lead.range
+    return expr
+  }
+
+  /// Parses an integer literal.
+  public mutating func parseIntLit() throws -> IntLit {
+    guard let lead = take(.integer) else {
+      throw ParseError(message: "expected integer literal", range: peek()?.range)
+    }
+    guard let value = Int(lead.value) else {
+      throw ParseError(message: "invalid integer literal '\(lead.value)'", range: lead.range)
+    }
+
+    let expr = IntLit(value: value)
+    expr.range = lead.range
+    return expr
+  }
+
+  // MARK: Type Signatures
+
+  /// Parses a type signature.
+  public mutating func parseTypeSign() throws -> TypeSign {
+    // Save the current location to build the signature's range if it starts with a qualifier.
+    let lowerBound = peek()?.range.lowerBound
+
+    // Parse a list of type qualifiers.
+    var quals: [TypeQual] = []
+    while let token = take(.qualifier) {
+      guard let qual = TypeQual(token: token) else {
+        throw ParseError(message: "invalid type qualifier '\(token.value)'", range: token.range)
+      }
+      quals.append(qual)
+    }
+
+    // Parse an unbundled type signature.
+    var base: TypeSign
+    switch peek()?.kind {
+    case .leftParen:
+      let lead = peek()!
+      let params = try parseParenthesizedSignList()
+
+      if take(.arrow) != nil {
+        let output = try parseTypeSign()
+        let sign = FuncSign(params: params, output: output)
+        sign.range = lead.range.lowerBound ..< output.range!.upperBound
+        base = sign
+      } else if params.count == 1 {
+        base = params[0]
+      } else {
+        throw ParseError(message: "expected '->' separator", range: peek()?.range)
+      }
+
+    case .universal:
+      base = try parseUniversalSign()
+
+    case .name:
+      base = try parseIdentSign()
+
+    case .exclamation:
+      base = try parseLocSign()
+
+    case .leftBrace:
+      base = try parseTupleSign()
+
+    default:
+      throw ParseError(message: "expected type signature", range: peek()?.range)
+    }
+
+    // Parse a list of assumptions.
+    var assumps: [AssumptionSign] = []
+    while take(.plus) != nil {
+      assumps.append(try parseAssumpSign())
+    }
+
+    if !assumps.isEmpty {
+      let bundle = BundledSign(base: base, assumptions: assumps)
+      bundle.range = base.range!.lowerBound ..< assumps.last!.range!.upperBound
+      base = bundle
+    }
+
+    if !quals.isEmpty {
+      let sign = QualSign(base: base, qualifiers: quals)
+      sign.range = lowerBound! ..< base.range!.upperBound
+      return sign
+    } else {
+      return base
+    }
+  }
+
+  /// Parses parenthesized a list of type signatures
+  public mutating func parseParenthesizedSignList() throws -> [TypeSign] {
+    guard take(.leftParen) != nil else {
+      throw ParseError(message: "expected '(' delimiter", range: peek()?.range)
+    }
+
+    let endIndex = indexOfMatchingDelimiter(openKind: .leftParen, closeKind: .rightParen)
+    let signs = try parseList(
+      until: endIndex,
+      with: { parser in try parser.parseTypeSign() })
+
+    guard take(.rightParen) != nil else {
+      throw ParseError(message: "expected ')' delimiter", range: peek()?.range)
+    }
+
+    return signs
+  }
+
+  /// Parses an universally quantified type signature.
+  public mutating func parseUniversalSign() throws -> UniversalSign {
+    guard let lead = take(.universal) else {
+      throw ParseError(message: "expected universal quantifier", range: peek()?.range)
+    }
+
+    let endIndex = input[index...].firstIndex(where: { $0.kind == .dot })
+      ?? input.endIndex
+    let params = try parseList(
+      until: endIndex,
+      with: { parser in try parser.parseQuantParamDecl() })
+
+    guard take(.dot) != nil else {
+      throw ParseError(message: "expected '.' separator", range: peek()?.range)
+    }
+
+    let base = try parseTypeSign()
+
+    let sign = UniversalSign(base: base, params: params)
+    sign.range = lead.range.lowerBound ..< base.range!.upperBound
+    return sign
+  }
+
+  /// Parses a type identifier.
+  public mutating func parseIdentSign() throws -> IdentSign {
+    guard let name = take(.name) else {
+      throw ParseError(message: "expected type identifier", range: peek()?.range)
+    }
+
+    let sign = IdentSign(name: String(name.value))
+    sign.range = name.range
+    return sign
+  }
+
+  /// Parses a location signature.
+  public mutating func parseLocSign() throws -> LocationSign {
+    guard let lead = take(.exclamation) else {
+      throw ParseError(message: "expected '!'", range: peek()?.range)
+    }
+    guard let ident = try? parseIdentExpr() else {
+      throw ParseError(message: "expected location identifier folowing '!'", range: peek()?.range)
+    }
+
+    let sign = LocationSign(location: ident)
+    sign.range = lead.range.lowerBound ..< ident.range!.upperBound
+    return sign
+  }
+
+  /// Parses a tuple signature.
+  public mutating func parseTupleSign() throws -> TupleSign {
+    guard let lead = take(.leftBrace) else {
+      throw ParseError(message: "expected '{' delimiter", range: peek()?.range)
+    }
+
+    let endIndex = indexOfMatchingDelimiter(openKind: .leftBrace, closeKind: .rightBrace)
+    let members = try parseList(
+      until: endIndex,
+      with: { parser in try parser.parseTypeSign() })
+
+    guard let trail = take(.rightBrace) else {
+      throw ParseError(message: "expected '}' delimiter", range: peek()?.range)
+    }
+
+    let sign = TupleSign(members: members)
+    sign.range = lead.range.lowerBound ..< trail.range.upperBound
+    return sign
+  }
+
+  /// Parses an assumption.
+  public mutating func parseAssumpSign() throws -> AssumptionSign {
+    guard let lead = take(.leftBracket) else {
+      throw ParseError(message: "expected '[' delimiter", range: peek()?.range)
+    }
+
+    let ident = try parseIdentExpr()
+
+    guard take(.colon) != nil else {
+      throw ParseError(message: "expected ':' separator", range: peek()?.range)
+    }
+
+    let sign = try parseTypeSign()
+
+    guard let trail = take(.rightBracket) else {
+      throw ParseError(message: "expected ']' delimiter", range: peek()?.range)
+    }
+
+    let assump = AssumptionSign(ident: ident, sign: sign)
+    assump.range = lead.range.lowerBound ..< trail.range.upperBound
+    return assump
+  }
+
+  // MARK: Helpers
+
+  /// Parses a comma-separated list of constructions.
+  private mutating func parseList<T>(
+    until endIndex: Int,
+    with parseFunc: (inout Parser) throws -> T
+  ) throws -> [T] {
+    var elements: [T] = []
+
+    while index < endIndex {
+      elements.append(try parseFunc(&self))
+      if index >= endIndex {
+        break
+      } else if take(.comma) != nil {
+        continue
+      } else {
+        throw ParseError(message: "expected ',' separator", range: peek()?.range)
+      }
+    }
+
+    return elements
+  }
+
+  /// Consumes the next element from the stream if it has the given kind.
+  ///
+  /// - Parameter kind: The kind of tokens to consume.
+  @discardableResult
+  private mutating func take(_ kind: Token.Kind) -> Token? {
+    guard index < input.endIndex else {
+      return nil
+    }
+
+    let element = input[index]
+    guard element.kind == kind else {
+      return nil
+    }
+
+    index = input.index(after: index)
+    return element
+  }
+
+  /// Determines the index of the specified closing delimiter, ignoring nested pairs of delimiters.
+  ///
+  /// This helper method can be used to determine how far the parser should go to read a list of
+  /// constructions. For instance, assuming the current index is `1` and the parser's input is
+  /// equivalent to `((a), b)`, then the method returns the index 7.
+  ///
+  /// - Parameters:
+  ///   - openKind: The kind of tokens that correspond to opening delimiters.
+  ///   - closeKind: The kind of tokens that correspond to closing delimiters.
+  private func indexOfMatchingDelimiter(openKind: Token.Kind, closeKind: Token.Kind) -> Int {
+    var endIndex = index
+    var openCount = 1
+
+    while endIndex < input.endIndex {
+      if input[endIndex].kind == closeKind {
+        openCount -= 1
+        if openCount == 0 {
+          break
+        }
+      } else if input[endIndex].kind == openKind {
+        openCount += 1
+      }
+
+      endIndex = input.index(after: endIndex)
+    }
+
+    return endIndex
   }
 
 }
 
-func t(_ kind: Token.Kind) -> ElementParser<ArraySlice<Token>> {
-  return ElementParser(predicate: { $0.kind == kind }, onFailure: { _ in nil })
+struct ParseError: Error {
+
+  let message: String
+
+  let range: SourceRange?
+
 }

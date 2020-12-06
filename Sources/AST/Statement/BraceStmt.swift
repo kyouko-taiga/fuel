@@ -1,7 +1,7 @@
 import Basic
 
 /// A block of statements.
-public final class BraceStmt: DeclContext {
+public final class BraceStmt: Stmt, DeclContext {
 
   public init(stmts: [Stmt]) {
     self.stmts = stmts

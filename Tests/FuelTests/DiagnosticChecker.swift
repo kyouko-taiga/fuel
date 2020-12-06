@@ -31,6 +31,7 @@ class DiagnosticChecker: DiagnosticConsumer {
     let (lineIndex, _) = source.caretPosition(at: location)
     let exp = expectations[lineIndex] ?? []
     guard let i = exp.firstIndex(where: { $0.matches(diagnostic) }) else {
+      // TODO: Include line and column index in the failure message.
       XCTFail("Unexpected diagnostic: \(diagnostic.message)")
       return
     }

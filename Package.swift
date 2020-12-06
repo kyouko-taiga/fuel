@@ -11,7 +11,6 @@ let package = Package(
     .library(name: "Fuel", targets: ["Fuel"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/kyouko-taiga/Diesel", from: "1.0.0"),
     .package(url: "https://github.com/llvm-swift/LLVMSwift.git", from: "0.7.0"),
   ],
   targets: [
@@ -25,9 +24,10 @@ let package = Package(
     .target(name: "Diagnostic", dependencies: ["Basic"]),
     .target(name: "Lexer", dependencies: ["Basic"]),
     // .target(name: "LLVMCodeGen", dependencies: ["AST", "LLVM"]),
-    .target(name: "Parser", dependencies: ["Diesel", "AST", "Lexer"]),
+    .target(name: "Parser", dependencies: ["AST", "Basic", "Lexer"]),
     .target(name: "Sema", dependencies: ["AST"]),
 
     .testTarget(name: "FuelTests", dependencies: ["Basic", "Diagnostic", "Fuel"]),
+    .testTarget(name: "ParserTests", dependencies: ["AST", "Basic", "Lexer", "Parser"]),
   ]
 )

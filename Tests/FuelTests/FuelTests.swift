@@ -58,11 +58,14 @@ class FuelTests: XCTestCase {
 
       try driver.execute()
 
-      for (line, exp) in checker.expectations {
-        for pattern in exp {
-          XCTFail(
-            "Expected diagnostic was not raised in \(url.lastPathComponent):\(line + 1): " +
-            (pattern.message ?? "_"))
+      if !checker.expectations.isEmpty {
+        for (line, exp) in checker.expectations {
+          for pattern in exp {
+            let message = "Sema/\(url.lastPathComponent):\(line): "
+              + "expected diagnostic was not raised: "
+              + (pattern.message ?? "_")
+            XCTFail(message)
+          }
         }
       }
     }
