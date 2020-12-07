@@ -270,9 +270,6 @@ public struct Parser: StreamProcessor {
     case .name:
       base = try parseIdentExpr()
 
-    case .junk:
-      base = try parseJunkLit()
-
     case .void:
       base = try parseVoidLit()
 
@@ -307,17 +304,6 @@ public struct Parser: StreamProcessor {
 
     let expr = IdentExpr(name: String(name.value))
     expr.range = name.range
-    return expr
-  }
-
-  /// Parses a junk literal.
-  public mutating func parseJunkLit() throws -> JunkLit {
-    guard let lead = take(.junk) else {
-      throw ParseError(message: "expected 'junk' literal", range: peek()?.range)
-    }
-
-    let expr = JunkLit()
-    expr.range = lead.range
     return expr
   }
 

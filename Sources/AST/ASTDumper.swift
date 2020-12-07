@@ -114,11 +114,6 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << "(IntLit \"\(node.value)\")"
   }
 
-  public func visit(_ node: JunkLit) {
-    self << lead
-    self << "(JunkLit)"
-  }
-
   public func visit(_ node: FuncDecl) {
     self << lead
     self << "(FuncDecl \"\(node.symbol)\""

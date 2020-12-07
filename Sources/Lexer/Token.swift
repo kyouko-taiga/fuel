@@ -46,8 +46,6 @@ public struct Token {
 
     case qualifier
 
-    case junk
-
     case void
 
     case true_

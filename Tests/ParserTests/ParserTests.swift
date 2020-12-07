@@ -175,10 +175,6 @@ class ParserTests: XCTestCase, ParserTestCase {
     }
   }
 
-  func testParseJunkLit() {
-    let _: JunkLit? = parse("junk", with: { try $0.parseExpr() })
-  }
-
   func testParseVoidLit() {
     let _: VoidLit? = parse("void", with: { try $0.parseExpr() })
   }

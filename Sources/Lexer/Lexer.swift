@@ -74,8 +74,6 @@ public struct Lexer: IteratorProtocol, Sequence, StreamProcessor {
         return Token(kind: .else_   , value: value, source: source)
       case "while":
         return Token(kind: .while_  , value: value, source: source)
-      case "junk":
-        return Token(kind: .junk    , value: value, source: source)
       case "void":
         return Token(kind: .void    , value: value, source: source)
       case "true":

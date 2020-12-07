@@ -53,8 +53,6 @@ public protocol Visitor {
 
   func visit(_ node: IntLit)
 
-  func visit(_ node: JunkLit)
-
   func visit(_ node: VoidLit)
 
 }
@@ -425,12 +423,6 @@ extension Visitor {
   ///
   /// - Parameter node: The node to visit.
   public func visit(_ node: IntLit) {
-  }
-
-  /// Traverses the specified node, visiting each of its children.
-  ///
-  /// - Parameter node: The node to visit.
-  public func visit(_ node: JunkLit) {
   }
 
   /// Traverses the specified node, visiting each of its children.

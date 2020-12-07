@@ -342,10 +342,20 @@ public final class TypeChecker: Visitor {
   }
 
   public func visit(_ node: ScopeAllocStmt) {
+    // Determine the new storage's memory layout.
+    guard let storageType = node.sign.type else {
+      compilerContext.report(message: "undefined storage type")
+        .set(location: node.sign.range?.lowerBound)
+        .add(range: node.sign.range)
+      return
+    }
+
     // Allocate a new location and create a capacity for it.
     let a = alloc()
     gamma[Symbol(decl: node)] = QualType(bareType: LocationType(location: a))
-    gamma[a] = QualType(bareType: BuiltinType.junk)
+    gamma[a] = QualType(
+      bareType: JunkType(base: storageType.bareType),
+      quals: storageType.quals)
   }
 
   public func visit(_ node: StoreStmt) {
@@ -405,9 +415,6 @@ public final class TypeChecker: Visitor {
 
     case is VoidLit:
       return QualType(bareType: BuiltinType.void)
-
-    case is JunkLit:
-      return QualType(bareType: BuiltinType.junk)
 
     case let ident as IdentExpr:
       guard let decl = ident.referredDecl else {
