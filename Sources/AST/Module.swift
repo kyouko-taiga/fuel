@@ -33,10 +33,9 @@ public final class Module: Identifiable {
     let module = Module(id: "_Builtin", typeDecls: [], funcDecls: [])
 
     // Inject built-in type declarations.
-    module.typeDecls.append(BuiltinTypeDecl(type: .void))
-    module.typeDecls.append(BuiltinTypeDecl(type: .junk))
-    module.typeDecls.append(BuiltinTypeDecl(type: .bool))
-    module.typeDecls.append(BuiltinTypeDecl(type: .int))
+    for builtin in BuiltinType.allCases {
+      module.typeDecls.append(BuiltinTypeDecl(type: builtin))
+    }
 
     return module
   }()

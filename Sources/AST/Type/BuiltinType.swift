@@ -8,6 +8,9 @@ public final class BuiltinType: BareType {
   /// The type's name.
   public let name: String
 
+  /// The built-in `Any` type.
+  public static let any = BuiltinType(name: "Any")
+
   /// The built-in `Void` type.
   public static let void = BuiltinType(name: "Void")
 
@@ -19,6 +22,14 @@ public final class BuiltinType: BareType {
 
   /// The built-in `Int` type.
   public static let int = BuiltinType(name: "Int")
+
+}
+
+extension BuiltinType: CaseIterable {
+
+  public typealias AllCases = [BuiltinType]
+
+  public static let allCases = [any, junk, void, bool, int]
 
 }
 

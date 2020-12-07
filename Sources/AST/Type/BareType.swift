@@ -19,7 +19,7 @@ public class BareType {
   ///
   /// - Parameter other: Another semantic type.
   public func isSubtype(of other: BareType) -> Bool {
-    return isEqual(to: other) || other.isEqual(to: BuiltinType.junk)
+    return isEqual(to: other) || other.isEqual(to: BuiltinType.any)
   }
 
   /// Returns the "join" of this type with another type, i.e., the least supertype of both.
@@ -28,7 +28,7 @@ public class BareType {
   public func join(with other: BareType) -> BareType {
     return isEqual(to: other)
       ? self
-      : BuiltinType.junk
+      : BuiltinType.any
   }
 
 }
