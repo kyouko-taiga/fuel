@@ -2,14 +2,14 @@ import Basic
 
 public final class StoreStmt: Stmt {
 
-  public init(value: Expr, ident: IdentExpr) {
-    self.value = value
-    self.ident = ident
+  public init(rvalue: Expr, lvalue: LValueExpr) {
+    self.rvalue = rvalue
+    self.lvalue = lvalue
   }
 
-  public var value: Expr
+  public var rvalue: Expr
 
-  public var ident: IdentExpr
+  public var lvalue: LValueExpr
 
   public var range: SourceRange?
 
@@ -22,7 +22,7 @@ public final class StoreStmt: Stmt {
 extension StoreStmt: CustomStringConvertible {
 
   public var description: String {
-    return "store \(value), \(ident)"
+    return "store \(rvalue), \(lvalue)"
   }
 
 }

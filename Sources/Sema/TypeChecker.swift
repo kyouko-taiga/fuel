@@ -349,27 +349,25 @@ public final class TypeChecker: Visitor {
   }
 
   public func visit(_ node: StoreStmt) {
-    // Determine the type of the value being stored.
-    guard let valueType = type(of: node.value) else {
-      compilerContext.report(message: "cannot determine the type of expression '\(node.value)'")
-        .set(location: node.value.range?.lowerBound)
-        .add(range: node.value.range)
+    // Determine the rvalue's type.
+    guard let rvType = type(of: node.rvalue) else {
+      compilerContext.report(message: "cannot determine the type of expression '\(node.rvalue)'")
+        .set(location: node.rvalue.range?.lowerBound)
+        .add(range: node.rvalue.range)
       return
     }
 
-    // Determine the type of the target identifier.
-    guard let identSymbol = node.ident.referredDecl?.symbol,
-          let identType = gamma[identSymbol]
-    else {
-      compilerContext.report(message: "cannot determine the type of '\(node.ident.name)'")
-        .set(location: node.ident.range?.lowerBound)
-        .add(range: node.ident.range)
+    // Determine the lvalue's type.
+    guard let lvType = type(of: node.lvalue) else {
+      compilerContext.report(message: "cannot determine the type of expression '\(node.lvalue)'")
+        .set(location: node.lvalue.range?.lowerBound)
+        .add(range: node.lvalue.range)
       return
     }
 
     // The target identifier should have type `!a`.
-    guard let a = (identType.bareType as? LocationType)?.location else {
-      compilerContext.report(message: "cannot store to a value of type '\(identType)'")
+    guard let a = (lvType.bareType as? LocationType)?.location else {
+      compilerContext.report(message: "cannot store to a value of type '\(lvType)'")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
       return
@@ -379,11 +377,11 @@ public final class TypeChecker: Visitor {
     guard gamma[a] != nil else {
       compilerContext.report(message: "store requires missing capability '[\(a): τ]'")
         .set(location: node.range?.lowerBound)
-        .add(range: node.ident.range)
+        .add(range: node.lvalue.range)
       return
     }
 
-    gamma[a] = valueType
+    gamma[a] = rvType
   }
 
   // MARK: Helper functions.

@@ -142,15 +142,21 @@ public struct Parser: StreamProcessor {
 
     case .store:
       let lead = take(.store)!
-      let value = try parseExpr()
+      let rvalue = try parseExpr()
 
       guard take(.comma) != nil else {
         throw ParseError(message: "expected ',' separator", range: peek()?.range)
       }
 
-      let ident = try parseIdentExpr()
-      let stmt = StoreStmt(value: value, ident: ident)
-      stmt.range = lead.range.lowerBound ..< ident.range!.upperBound
+      let expr = try parseExpr()
+      guard let lvalue = expr as? LValueExpr else {
+        throw ParseError(
+          message: "target of store statement should be an identifier or a member expression",
+          range: expr.range)
+      }
+
+      let stmt = StoreStmt(rvalue: rvalue, lvalue: lvalue)
+      stmt.range = lead.range.lowerBound ..< expr.range!.upperBound
       return stmt
 
     case .return_:

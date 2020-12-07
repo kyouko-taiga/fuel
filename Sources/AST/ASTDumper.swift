@@ -233,9 +233,9 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << lead
     self << "(StoreStmt"
     self << "\n"
-    withInc { node.value.accept(self) }
+    withInc { node.rvalue.accept(self) }
     self << "\n"
-    withInc { node.ident.accept(self) }
+    withInc { node.lvalue.accept(self) }
     self << ")"
   }
 

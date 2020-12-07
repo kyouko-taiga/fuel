@@ -1,7 +1,7 @@
 import Basic
 
 /// A reference to an aggregate's member.
-public final class MemberExpr: Expr {
+public final class MemberExpr: LValueExpr {
 
   /// Creates a reference to an aggregate's member.
   ///

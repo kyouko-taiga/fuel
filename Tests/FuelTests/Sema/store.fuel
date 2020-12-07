@@ -6,7 +6,7 @@ func main() : () -> Void {
   store true, foo
 
   // #!error@+2 cannot find 'ham' in scope
-  // #!error@+1 cannot determine the type of 'ham'
+  // #!error@+1 cannot determine the type of expression 'ham'
   store 1337, ham
 
   return void

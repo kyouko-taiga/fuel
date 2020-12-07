@@ -1,7 +1,7 @@
 import Basic
 
 /// A reference to a value declaration.
-public final class IdentExpr: Expr {
+public final class IdentExpr: LValueExpr {
 
   /// Creates a new reference to a value declaration.
   ///
