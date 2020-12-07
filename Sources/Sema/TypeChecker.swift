@@ -1,4 +1,5 @@
 import AST
+import Basic
 
 /// A static analysis pass that checks the type of every statement.
 ///
@@ -27,6 +28,20 @@ public final class TypeChecker: Visitor {
   /// The type of the function being type-checked.
   private var funcType: FuncType!
 
+  public func visit(_ node: Module) {
+    // Create an initial a typing context, with one entry for each type and function declaration.
+    var context: TypingContext = [:]
+    for decl in node.funcDecls {
+      context[Symbol(decl: decl)] = decl.type
+    }
+
+    // Type-check each function declaration.
+    for decl in node.funcDecls {
+      gamma = context
+      decl.accept(self)
+    }
+  }
+
   public func visit(_ node: BraceStmt) {
     // Type-check each statement in the block.
     var namedDecls: [NamedDecl] = []
@@ -54,11 +69,21 @@ public final class TypeChecker: Visitor {
   }
 
   public func visit(_ node: CallStmt) {
+    do {
+      try typeCheck(node)
+    } catch let error as TypeError {
+      error.report(in: compilerContext)
+    } catch {
+      compilerContext.report(message: String(describing: error))
+    }
+  }
+
+  public func typeCheck(_ node: CallStmt) throws {
     // Determine the type of the value callee.
     let funcType: FuncType
     let quantifiedParams: [QuantifiedParam]
 
-    switch type(of: node.ident)?.bareType {
+    switch try type(of: node.ident).bareType {
     case let ft as FuncType:
       funcType = ft
       quantifiedParams = []
@@ -68,43 +93,26 @@ public final class TypeChecker: Visitor {
       funcType = ut.base as! FuncType
       quantifiedParams = ut.params
 
-    case .some:
-      compilerContext.report(message: "expression '\(node.ident)' is not a function")
-        .set(location: node.ident.range?.lowerBound)
-        .add(range: node.ident.range)
-      return
-
-    case nil:
-      compilerContext.report(message: "cannot determine the type of expression '\(node.ident)'")
-        .set(location: node.ident.range?.lowerBound)
-        .add(range: node.ident.range)
-      return
+    case let t:
+      throw TypeError.callToNonFunctionType(expr: node.ident, type: t)
     }
 
     // Pair each argument's type with the corresponding parameter's type to build the set of typing
     // constraints that's used to instantiate the function's signature.
     var solver = TypeSolver(context: gamma, constraints: [], quantifiedParams: quantifiedParams)
     for (arg, param) in zip(node.args, funcType.params) {
-      if let lhs = type(of: arg) {
+      do {
+        let lhs = try type(of: arg)
         solver.constraints.append(TypeSolver.Constraint(lhs: .type(lhs), rhs: .type(param)))
-      } else {
-        compilerContext.report(message: "cannot determine the type of expression '\(arg)'")
-          .set(location: arg.range?.lowerBound)
-          .add(range: arg.range)
+      } catch let error as TypeError {
+        error.report(in: compilerContext)
       }
     }
 
     // Solve the typing constraints.
     guard let assumptions = solver.solve() else {
-      let argTypes = node.args
-        .map({ type(of: $0).map(String.init(describing:)) ?? "_" })
-        .joined(separator: ", ")
-      compilerContext.report(
-        message:
-          "cannot call function '\(node.ident)' with arguments list of type '\(argTypes)'")
-        .set(location: node.range?.lowerBound)
-        .add(range: node.range)
-      return
+      let argTypes = node.args.map({ arg in try? type(of: arg) })
+      throw TypeError.invalidCallArgTypes(funcIdent: node.ident, argTypes: argTypes)
     }
 
     // Consume the assumptions required by the function.
@@ -192,17 +200,26 @@ public final class TypeChecker: Visitor {
   }
 
   public func visit(_ node: IfStmt) {
+    do {
+      try typeCheck(node)
+    } catch let error as TypeError {
+      error.report(in: compilerContext)
+    } catch {
+      compilerContext.report(message: String(describing: error))
+    }
+  }
+
+  public func typeCheck(_ node: IfStmt) throws {
     // Visit the node's condition.
     node.cond.accept(self)
 
     // Check that the condition is a subtype of Bool.
-    guard let tau = type(of: node.cond),
-          tau <= QualType(bareType: BuiltinType.bool)
-    else {
-      compilerContext.report(message: "condition '\(node.cond)' should be Boolean")
-        .set(location: node.cond.range?.lowerBound)
-        .add(range: node.cond.range)
-      return
+    let tau = try type(of: node.cond)
+    guard tau <= BuiltinType.bool.qualified() else {
+      throw TypeError.invalidTypeConversion(
+        t1: tau,
+        t2: BuiltinType.bool.qualified(),
+        range: node.cond.range)
     }
 
     // Type both branches of the statement individually.
@@ -242,57 +259,50 @@ public final class TypeChecker: Visitor {
   }
 
   public func visit(_ node: LoadStmt) {
-    // Determine the type of the value reference.
-    guard let nodeType = type(of: node.valueRef) else {
-      compilerContext.report(message: "cannot determine the type of expression '\(node.valueRef)'")
-        .set(location: node.valueRef.range?.lowerBound)
-        .add(range: node.valueRef.range)
-      return
+    do {
+      try typeCheck(node)
+    } catch let error as TypeError {
+      error.report(in: compilerContext)
+    } catch {
+      compilerContext.report(message: String(describing: error))
     }
+  }
 
-    // There are two cases to consider; the first is when the value reference is an identifier, the
-    // second is when it's a member expression. In either case, the type of the value reference
-    // should be `!a` for some location `a`.
-    guard let a = (nodeType.bareType as? LocationType)?.location else {
-      compilerContext.report(message: "invalid value reference '\(node.valueRef)'")
-        .set(location: node.valueRef.range?.lowerBound)
-        .add(range: node.valueRef.range)
-      return
+  public func typeCheck(_ node: LoadStmt) throws {
+    // Determine the type of the value reference.
+    let nodeType = try type(of: node.valueRef)
+
+    // There are two cases to consider; the first is when the l-value is an identifier, the second
+    // is when it's a member expression. In either case, the type of the l-value should be `!a`
+    // for some location `a`.
+    guard let loc = (nodeType.bareType as? LocationType)?.location else {
+      throw TypeError.invalidLValue(expr: node.valueRef)
     }
 
     // Check if we hold a capability `[a: τ]`.
-    guard let tau = gamma[a] else {
-      compilerContext.report(message: "load requires missing capability '[\(a): τ]'")
-        .set(location: node.range?.lowerBound)
-        .add(range: node.valueRef.range)
-      return
+    guard let tau = gamma[loc] else {
+      throw TypeError.missingCapability(
+        symbol: loc,
+        type: BuiltinType.any.qualified(by: []),
+        range: node.range)
     }
 
     gamma[Symbol(decl: node)] = tau
   }
 
-  public func visit(_ node: Module) {
-    // Create an initial a typing context, with one entry for each type and function declaration.
-    var context: TypingContext = [:]
-    for decl in node.funcDecls {
-      context[Symbol(decl: decl)] = decl.type
-    }
-
-    // Type-check each function declaration.
-    for decl in node.funcDecls {
-      gamma = context
-      decl.accept(self)
+  public func visit(_ node: ReturnStmt) {
+    do {
+      try typeCheck(node)
+    } catch let error as TypeError {
+      error.report(in: compilerContext)
+    } catch {
+      compilerContext.report(message: String(describing: error))
     }
   }
 
-  public func visit(_ node: ReturnStmt) {
+  public func typeCheck(_ node: ReturnStmt) throws {
     // Determine the type of the return value.
-    guard let returnValueType = type(of: node.value) else {
-      compilerContext.report(message: "cannot determine the type of expression '\(node.value)'")
-        .set(location: node.value.range?.lowerBound)
-        .add(range: node.value.range)
-      return
-    }
+    let returnValueType = try type(of: node.value)
 
     // Check that the type of the return value matches the function's output type.
     let outputType: QualType
@@ -307,103 +317,90 @@ public final class TypeChecker: Visitor {
     }
 
     guard returnValueType.isSubtype(of: outputType) else {
-      compilerContext.report(
-        message:
-          "cannot convert value of type '\(returnValueType)' " +
-          "to expected type '\(outputType)'")
-        .set(location: node.value.range?.lowerBound)
-        .add(range: node.value.range)
-      return
+      throw TypeError.invalidTypeConversion(
+        t1: returnValueType,
+        t2: outputType,
+        range: node.value.range)
     }
 
     // Verity that the the environment contains the assumptions described by the function's
     // return type.
     for assumption in assumptions {
       guard let tau = gamma[assumption.key] else {
-        compilerContext.report(
-          message:
-            "function return requires missing capability " +
-            "'[\(assumption.key): \(assumption.value)]'")
-          .set(location: node.range?.lowerBound)
-          .add(range: node.range)
+        TypeError
+          .missingCapability(symbol: assumption.key, type: assumption.value, range: node.range)
+          .report(in: compilerContext)
         continue
       }
 
       guard tau <= assumption.value else {
-        compilerContext.report(
-          message:
-            "cannot convert capability '[\(assumption.key): \(tau)]' " +
-            "to expected capability '[\(assumption.key): \(assumption.value)]'")
-          .set(location: node.range?.lowerBound)
-          .add(range: node.range)
+        TypeError
+          .invalidAssumptionConversion(
+            a1: (assumption.key, tau),
+            a2: assumption,
+            range: node.range)
+          .report(in: compilerContext)
         continue
       }
     }
   }
 
   public func visit(_ node: ScopeAllocStmt) {
+    typeCheck(node)
+  }
+
+  public func typeCheck(_ node: ScopeAllocStmt) {
     // Determine the new storage's memory layout.
     guard let storageType = node.sign.type else {
-      compilerContext.report(message: "undefined storage type")
-        .set(location: node.sign.range?.lowerBound)
-        .add(range: node.sign.range)
+      // Skip the declaration if it's type is undefined. This can be done silently, as it should
+      // only happen when the type realizer was not able to evaluate an appropriate type, which
+      // would have resulted in a diagnostic.
       return
     }
 
     // Allocate a new location and create a capacity for it.
     let a = alloc()
-    gamma[Symbol(decl: node)] = QualType(bareType: LocationType(location: a))
-    gamma[a] = QualType(
-      bareType: JunkType(base: storageType.bareType),
-      quals: storageType.quals)
+    gamma[Symbol(decl: node)] = LocationType(location: a).qualified()
+    gamma[a] = JunkType(base: storageType.bareType).qualified(by: storageType.quals)
   }
 
   public func visit(_ node: StoreStmt) {
-    // Determine the rvalue's type.
-    guard let rvType = type(of: node.rvalue) else {
-      compilerContext.report(message: "cannot determine the type of expression '\(node.rvalue)'")
-        .set(location: node.rvalue.range?.lowerBound)
-        .add(range: node.rvalue.range)
-      return
+    do {
+      try typeCheck(node)
+    } catch let error as TypeError {
+      error.report(in: compilerContext)
+    } catch {
+      compilerContext.report(message: String(describing: error))
     }
+  }
 
-    // Determine the lvalue's type.
-    guard let lvType = type(of: node.lvalue) else {
-      compilerContext.report(message: "cannot determine the type of expression '\(node.lvalue)'")
-        .set(location: node.lvalue.range?.lowerBound)
-        .add(range: node.lvalue.range)
-      return
-    }
+  public func typeCheck(_ node: StoreStmt) throws {
+    // Determine the types of the l-value and r-value.
+    let rvType = try type(of: node.rvalue)
+    let lvType = try type(of: node.lvalue)
 
     // The target identifier should have type `!a`.
-    guard let a = (lvType.bareType as? LocationType)?.location else {
-      compilerContext.report(message: "cannot store to a value of type '\(lvType)'")
-        .set(location: node.range?.lowerBound)
-        .add(range: node.range)
-      return
+    guard let loc = (lvType.bareType as? LocationType)?.location else {
+      throw TypeError.invalidLValue(expr: node.lvalue)
     }
 
     // Check that we have the capability to write at `a`.
-    guard var storageType = gamma[a] else {
-      compilerContext.report(message: "store requires missing capability '[\(a): τ]'")
-        .set(location: node.range?.lowerBound)
-        .add(range: node.lvalue.range)
-      return
+    guard var storageType = gamma[loc] else {
+      throw TypeError.missingCapability(
+        symbol: loc,
+        type: BuiltinType.any.qualified(),
+        range: node.range)
     }
 
     // Check that τ's layout is compatible with the value to store.
     if let junk = storageType.bareType as? JunkType {
-      storageType = QualType(bareType: junk.base, quals: storageType.quals)
+      storageType = junk.base.qualified(by: storageType.quals)
     }
     guard rvType.isSubtype(of: storageType) else {
-      compilerContext.report(
-        message: "cannot convert value of type '\(rvType)' to expected type '\(storageType)'")
-        .set(location: node.rvalue.range?.lowerBound)
-        .add(range: node.rvalue.range)
-      return
+      throw TypeError.invalidTypeConversion(t1: rvType, t2: storageType, range: node.rvalue.range)
     }
 
-    gamma[a] = rvType
+    gamma[loc] = rvType
   }
 
   // MARK: Helper functions.
@@ -417,28 +414,46 @@ public final class TypeChecker: Visitor {
   }
 
   /// Implements `Γ ⊢ e : τ`.
-  private func type(of e: Expr) -> QualType? {
+  private func type(of e: Expr) throws -> QualType {
     switch e {
     case is BoolLit:
-      return QualType(bareType: BuiltinType.bool)
+      return BuiltinType.bool.qualified()
 
     case is IntLit:
-      return QualType(bareType: BuiltinType.int)
+      return BuiltinType.int.qualified()
 
     case is VoidLit:
-      return QualType(bareType: BuiltinType.void)
+      return BuiltinType.void.qualified()
 
     case let ident as IdentExpr:
       guard let decl = ident.referredDecl else {
-        return nil
+        throw TypeError.undefinedExprType(expr: e)
       }
-      return gamma[Symbol(decl: decl)]
+      guard let type = gamma[Symbol(decl: decl)] else {
+        throw TypeError.undefinedExprType(expr: e)
+      }
+      return type
 
     case let member as MemberExpr:
-      return nil
+      let bareType: BareType
+
+      switch try type(of: member.base).bareType {
+      case let junk as JunkType:
+        bareType = junk.base
+      case let t:
+        bareType = t
+      }
+
+      guard let tupleType = bareType as? TupleType else {
+        throw TypeError.memberAccessInScalarType(expr: e, type: bareType)
+      }
+      guard member.offset < tupleType.members.count else {
+        throw TypeError.invalidMemberOffset(expr: e)
+      }
+      return tupleType.members[member.offset]
 
     default:
-      return nil
+      throw TypeError.undefinedExprType(expr: e)
     }
   }
 

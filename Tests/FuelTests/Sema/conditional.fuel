@@ -1,5 +1,5 @@
 func main() : () -> Void {
-  // #!error@+1 condition 'void' should be Boolean
+  // #!error@+1 cannot convert value of type 'Void' to expected type 'Bool'
   if void {
   }
 

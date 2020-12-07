@@ -3,6 +3,13 @@
 /// Base types, once created, are immutable.
 public class BareType {
 
+  /// The type qualified by the given qualifiers.
+  ///
+  /// - Parameter quals: A set of type qualifiers.
+  public func qualified(by quals: TypeQualSet = []) -> QualType {
+    return QualType(bareType: self, quals: quals)
+  }
+
   /// The type obtained by applying the given substitution.
   public func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
     return self

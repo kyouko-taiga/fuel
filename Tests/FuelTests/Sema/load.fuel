@@ -1,5 +1,5 @@
 func main() : () -> Void {
-  // #!error@+1 invalid value reference '42'
+  // #!error@+1 invalid l-value '42'
   _0 = load 42
 
   // #!error@+2 cannot find 'nope' in scope
@@ -10,7 +10,7 @@ func main() : () -> Void {
   store 1337, _2
   _3 = call consume, _2
 
-  // #!error@+1 load requires missing capability '[#0: τ]'
+  // #!error@+1 missing capability [#0: Any]
   _4 = load _2
 
   return void
