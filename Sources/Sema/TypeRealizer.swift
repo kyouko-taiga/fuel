@@ -5,13 +5,13 @@ public final class TypeRealizer: Visitor {
 
   /// Creates a type realizer pass.
   ///
-  /// - Parameter context: The compiler context in which the pass is ran.
-  public init(compilerContext: CompilerContext) {
-    self.compilerContext = compilerContext
+  /// - Parameter astContext: The AST context in which the pass is ran.
+  public init(astContext: ASTContext) {
+    self.astContext = astContext
   }
 
-  /// The compiler context in which the pass is ran.
-  private let compilerContext: CompilerContext
+  /// The AST context in which the pass is ran.
+  private let astContext: ASTContext
 
   /// An error type.
   private let errorType = QualType(bareType: ErrorType.get)
@@ -30,7 +30,7 @@ public final class TypeRealizer: Visitor {
 
     default:
       funcType = nil
-      compilerContext.report(message: "'\(node.sign)' is not a function type")
+      astContext.report(message: "'\(node.sign)' is not a function type")
         .set(location: node.sign.range?.lowerBound)
         .add(range: node.sign.range)
     }
@@ -38,7 +38,7 @@ public final class TypeRealizer: Visitor {
     if funcType != nil {
       node.type = node.sign.type
       if node.params.count != funcType!.params.count {
-        compilerContext.report(message: "incompatible function signature")
+        astContext.report(message: "incompatible function signature")
           .set(location: node.sign.range?.lowerBound)
           .add(range: node.sign.range)
       }
@@ -96,7 +96,7 @@ public final class TypeRealizer: Visitor {
       // Check that the assumption is not inconsistent with the ones already realized.
       let symbol = Symbol(decl: decl)
       guard assumptions[symbol] == nil else {
-        compilerContext.report(message: "inconsistent assumption")
+        astContext.report(message: "inconsistent assumption")
           .set(location: assumption.range?.lowerBound)
           .add(range: assumption.range)
         continue

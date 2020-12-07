@@ -7,7 +7,7 @@ import Fuel
 func main() throws {
   // Create a compilation driver.
   let driver = Driver()
-  driver.context.diagnosticConsumer = Console(sourceManager: driver.sourceManager)
+  driver.astContext.diagnosticConsumer = Console(sourceManager: driver.sourceManager)
 
   // Configure the driver's pipeline.
   driver.pipeline.append(.parse(URL(fileURLWithPath: "Hello.fuel")))

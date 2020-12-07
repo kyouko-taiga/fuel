@@ -7,17 +7,17 @@ import Parser
 
 class ParserTests: XCTestCase, ParserTestCase {
 
-  var context: CompilerContext!
+  var astContext: ASTContext!
 
   var sourceManager: SourceManager!
 
   override func setUp() {
-    context = CompilerContext()
+    astContext = ASTContext()
     sourceManager = SourceManager()
   }
 
   override func tearDown() {
-    context = nil
+    astContext = nil
     sourceManager = nil
   }
 

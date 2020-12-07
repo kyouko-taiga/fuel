@@ -1,15 +1,15 @@
 import Basic
 import Diagnostic
 
-/// A compiler context holding references to various resources throughout all compilation stages.
-public final class CompilerContext {
+/// An AST context holding references to various resources throughout all compilation stages.
+public final class ASTContext {
 
-  /// Creates a new compiler context.
+  /// Creates a new AST context.
   public init() {
     modules = [Module.builtin.id: Module.builtin]
   }
 
-  /// The modules loaded in the compiler context.
+  /// The modules loaded in the AST context.
   public var modules: [Module.ID: Module]
 
   /// The consumer for all in-flight diagnostics.

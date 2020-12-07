@@ -13,11 +13,11 @@ public final class Driver {
   public init(
     sourceManager: SourceManager = SourceManager(),
     pipeline: [CompilerAction] = [],
-    context: CompilerContext = CompilerContext()
+    astContext: ASTContext = ASTContext()
   ) {
     self.pipeline = pipeline
     self.sourceManager = sourceManager
-    self.context = context
+    self.astContext = astContext
   }
 
   /// The driver's pipeline.
@@ -26,8 +26,8 @@ public final class Driver {
   /// The driver's source manager.
   public let sourceManager: SourceManager
 
-  /// The driver's compiler context.
-  public let context: CompilerContext
+  /// The driver's AST context.
+  public let astContext: ASTContext
 
   /// The driver's AST.
   public var module: Module?
@@ -55,7 +55,7 @@ public final class Driver {
 
   public func parse(url: URL) throws {
     let lexer = Lexer(source: try sourceManager.load(contentsOf: url))
-    var parser = Parser(context: context, input: lexer)
+    var parser = Parser(astContext: astContext, input: lexer)
 
     var decls: [FuncDecl] = []
     while let decl = parser.parseTopLevelDecl() {
@@ -71,11 +71,11 @@ public final class Driver {
   public func runSema() {
     guard let module = self.module else { return }
 
-    let p0 = NameBinder(compilerContext: context)
+    let p0 = NameBinder(astContext: astContext)
     p0.visit(module)
-    let p1 = TypeRealizer(compilerContext: context)
+    let p1 = TypeRealizer(astContext: astContext)
     p1.visit(module)
-    let p2 = TypeChecker(compilerContext: context)
+    let p2 = TypeChecker(astContext: astContext)
     p2.visit(module)
   }
 

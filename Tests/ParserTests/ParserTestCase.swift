@@ -7,7 +7,7 @@ import Parser
 
 protocol ParserTestCase {
 
-  var context: CompilerContext! { get }
+  var astContext: ASTContext! { get }
 
   var sourceManager: SourceManager! { get }
 
@@ -36,7 +36,7 @@ extension ParserTestCase {
     with parseFunc: (inout Parser) throws -> U
   ) -> T? {
     let tokens = tokenize(input)
-    var parser = Parser(context: context, input: tokens)
+    var parser = Parser(astContext: astContext, input: tokens)
 
     do {
       let node = try parseFunc(&parser)

@@ -12,16 +12,16 @@ public struct Parser: StreamProcessor {
   /// Creates a new parser.
   ///
   /// - Parameters:
-  ///   - context: The AST context in which the parser executes.
+  ///   - astContext: The AST context in which the parser executes.
   ///   - input: A sequence of tokens. `input` is enumerated during initialization; therefore it
   ///     must be a finite sequence.
-  public init<S>(context: CompilerContext, input: S) where S: Sequence, S.Element == Token {
-    self.context = context
+  public init<S>(astContext: ASTContext, input: S) where S: Sequence, S.Element == Token {
+    self.astContext = astContext
     self.input = Array(input)
   }
 
-  /// The compiler context in the parser runs.
-  public let context: CompilerContext
+  /// The AST context in the parser runs.
+  public let astContext: ASTContext
 
   public var input: [Token]
 
@@ -38,11 +38,11 @@ public struct Parser: StreamProcessor {
         // Report the parse error as a diagnostic.
         switch error {
         case let err as ParseError:
-          context.report(message: err.message)
+          astContext.report(message: err.message)
             .set(location: err.range?.lowerBound)
             .add(range: err.range)
         default:
-          context.report(message: error.localizedDescription)
+          astContext.report(message: error.localizedDescription)
         }
 
         // Attempt to recover at the start of the next top-level declaration.

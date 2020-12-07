@@ -2,8 +2,8 @@ import Basic
 
 /// A helper class to build in-flight diagnostics.
 ///
-/// Instances of this class are returned by the method `report(message:at:)` of a compiler context,
-/// and can be used to attach additional information to a diagnostic before it is emitted.
+/// Instances of this class are returned by the method `report(message:at:)` of an AST context, and
+/// can be used to attach additional information to a diagnostic before it is emitted.
 ///
 /// The diagnostic is emitted automatically when the last reference on this class is dropped.
 public final class DiagnosticBuilder {

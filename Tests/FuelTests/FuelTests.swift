@@ -54,7 +54,7 @@ class FuelTests: XCTestCase {
 
       let checker = DiagnosticChecker(sourceManager: sourceManager, expectations: expectations)
       let driver = Driver(sourceManager: sourceManager, pipeline: [.parse(url), .runSema])
-      driver.context.diagnosticConsumer = checker
+      driver.astContext.diagnosticConsumer = checker
 
       try driver.execute()
 

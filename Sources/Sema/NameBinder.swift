@@ -8,13 +8,13 @@ public final class NameBinder: Visitor {
 
   /// Creates a name binder pass.
   ///
-  /// - Parameter context: The compiler context in which the pass is ran.
-  public init(compilerContext: CompilerContext) {
-    self.compilerContext = compilerContext
+  /// - Parameter astContext: The AST context in which the pass is ran.
+  public init(astContext: ASTContext) {
+    self.astContext = astContext
   }
 
-  /// The compiler context in which the pass is ran.
-  private let compilerContext: CompilerContext
+  /// The AST context in which the pass is ran.
+  public let astContext: ASTContext
 
   /// The current declaration context.
   private var declContext: DeclContext?
@@ -78,7 +78,7 @@ public final class NameBinder: Visitor {
     if let decl = declContext?.lookup(name: node.name) {
       node.referredDecl = decl
     } else {
-      compilerContext.report(message: "cannot find '\(node.name)' in scope")
+      astContext.report(message: "cannot find '\(node.name)' in scope")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
     }
@@ -93,12 +93,12 @@ public final class NameBinder: Visitor {
       node.referredDecl = typeDecl
 
     case .some:
-      compilerContext.report(message: "'\(node.name)' is not a type")
+      astContext.report(message: "'\(node.name)' is not a type")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
 
     case nil:
-      compilerContext.report(message: "cannot find '\(node.name)' in scope")
+      astContext.report(message: "cannot find '\(node.name)' in scope")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
     }
@@ -106,7 +106,7 @@ public final class NameBinder: Visitor {
 
   private func checkDuplicateDecl(_ node: NamedDecl) {
     if node.declContext!.decls.contains(where: { ($0 !== node) && ($0.name == node.name) }) {
-      compilerContext.report(message: "duplicate declaration '\(node.name)'")
+      astContext.report(message: "duplicate declaration '\(node.name)'")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
     }

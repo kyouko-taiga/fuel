@@ -7,7 +7,7 @@ public struct TypeError: Error {
 
   public let range: SourceRange?
 
-  public func report(in context: CompilerContext) {
+  public func report(in context: ASTContext) {
     context.report(message: message)
       .set(location: range?.lowerBound)
       .add(range: range)

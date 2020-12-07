@@ -8,13 +8,13 @@ public final class TypeChecker: Visitor {
 
   /// Creates a type checker pass.
   ///
-  /// - Parameter context: The compiler context in which the pass is ran.
-  public init(compilerContext: CompilerContext) {
-    self.compilerContext = compilerContext
+  /// - Parameter astContext: The AST context in which the pass is ran.
+  public init(astContext: ASTContext) {
+    self.astContext = astContext
   }
 
-  /// The compiler context in which the pass is ran.
-  private let compilerContext: CompilerContext
+  /// The AST context in which the pass is ran.
+  public let astContext: ASTContext
 
   /// The current typing context.
   private var gamma: TypingContext = [:]
@@ -72,9 +72,9 @@ public final class TypeChecker: Visitor {
     do {
       try typeCheck(node)
     } catch let error as TypeError {
-      error.report(in: compilerContext)
+      error.report(in: astContext)
     } catch {
-      compilerContext.report(message: String(describing: error))
+      astContext.report(message: String(describing: error))
     }
   }
 
@@ -105,7 +105,7 @@ public final class TypeChecker: Visitor {
         let lhs = try type(of: arg)
         solver.constraints.append(TypeSolver.Constraint(lhs: .type(lhs), rhs: .type(param)))
       } catch let error as TypeError {
-        error.report(in: compilerContext)
+        error.report(in: astContext)
       }
     }
 
@@ -176,7 +176,7 @@ public final class TypeChecker: Visitor {
         // Check that each packed assumption either adds a new binding, or agrees with the context.
         for assumption in eta {
           if let tau = gamma[assumption.key], tau != assumption.value {
-            compilerContext.report(message: "type of parameter '\(param.name)' is inconsistent")
+            astContext.report(message: "type of parameter '\(param.name)' is inconsistent")
               .set(location: param.range?.lowerBound)
               .add(range: param.range)
           } else {
@@ -203,9 +203,9 @@ public final class TypeChecker: Visitor {
     do {
       try typeCheck(node)
     } catch let error as TypeError {
-      error.report(in: compilerContext)
+      error.report(in: astContext)
     } catch {
-      compilerContext.report(message: String(describing: error))
+      astContext.report(message: String(describing: error))
     }
   }
 
@@ -262,9 +262,9 @@ public final class TypeChecker: Visitor {
     do {
       try typeCheck(node)
     } catch let error as TypeError {
-      error.report(in: compilerContext)
+      error.report(in: astContext)
     } catch {
-      compilerContext.report(message: String(describing: error))
+      astContext.report(message: String(describing: error))
     }
   }
 
@@ -294,9 +294,9 @@ public final class TypeChecker: Visitor {
     do {
       try typeCheck(node)
     } catch let error as TypeError {
-      error.report(in: compilerContext)
+      error.report(in: astContext)
     } catch {
-      compilerContext.report(message: String(describing: error))
+      astContext.report(message: String(describing: error))
     }
   }
 
@@ -329,7 +329,7 @@ public final class TypeChecker: Visitor {
       guard let tau = gamma[assumption.key] else {
         TypeError
           .missingCapability(symbol: assumption.key, type: assumption.value, range: node.range)
-          .report(in: compilerContext)
+          .report(in: astContext)
         continue
       }
 
@@ -339,7 +339,7 @@ public final class TypeChecker: Visitor {
             a1: (assumption.key, tau),
             a2: assumption,
             range: node.range)
-          .report(in: compilerContext)
+          .report(in: astContext)
         continue
       }
     }
@@ -368,9 +368,9 @@ public final class TypeChecker: Visitor {
     do {
       try typeCheck(node)
     } catch let error as TypeError {
-      error.report(in: compilerContext)
+      error.report(in: astContext)
     } catch {
-      compilerContext.report(message: String(describing: error))
+      astContext.report(message: String(describing: error))
     }
   }
 
