@@ -18,8 +18,10 @@ func main() throws {
 
   // Dump the compiled module.
   if let module = driver.module {
-    let dumper = ASTDumper(output: FileOutputStream.stdout)
+    let fos = FileOutputStream.stdout
+    let dumper = ASTDumper(output: fos)
     dumper.visit(module)
+    fos.write("\n")
   }
 }
 

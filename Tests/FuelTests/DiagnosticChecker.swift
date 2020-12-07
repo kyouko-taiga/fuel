@@ -18,7 +18,7 @@ class DiagnosticChecker: DiagnosticConsumer {
   var expectations: [Int: [DiagnosticPattern]]
 
   func consume(_ diagnostic: Diagnostic) {
-    XCTFail("Unexpected diagnostic: \(diagnostic.message)")
+    XCTFail("unexpected diagnostic: \(diagnostic.message)")
   }
 
   func consume(_ diagnostic: Diagnostic, at location: SourceLocation) {
@@ -32,7 +32,8 @@ class DiagnosticChecker: DiagnosticConsumer {
     let exp = expectations[lineIndex] ?? []
     guard let i = exp.firstIndex(where: { $0.matches(diagnostic) }) else {
       // TODO: Include line and column index in the failure message.
-      XCTFail("Unexpected diagnostic: \(diagnostic.message)")
+      let filename = location.sourceURL.lastPathComponent
+      XCTFail("\(filename): unexpected diagnostic: \(diagnostic.message)")
       return
     }
 
