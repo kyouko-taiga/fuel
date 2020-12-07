@@ -3,6 +3,9 @@ func main() : () -> Void {
   store 42, foo
 
   bar = salloc Int
+  store 43, foo
+
+  // #!error@+1 cannot convert value of type 'Bool' to expected type 'Int'
   store true, foo
 
   // #!error@+2 cannot find 'ham' in scope

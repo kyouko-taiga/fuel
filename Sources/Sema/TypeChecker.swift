@@ -384,10 +384,22 @@ public final class TypeChecker: Visitor {
     }
 
     // Check that we have the capability to write at `a`.
-    guard gamma[a] != nil else {
+    guard var storageType = gamma[a] else {
       compilerContext.report(message: "store requires missing capability '[\(a): τ]'")
         .set(location: node.range?.lowerBound)
         .add(range: node.lvalue.range)
+      return
+    }
+
+    // Check that τ's layout is compatible with the value to store.
+    if let junk = storageType.bareType as? JunkType {
+      storageType = QualType(bareType: junk.base, quals: storageType.quals)
+    }
+    guard rvType.isSubtype(of: storageType) else {
+      compilerContext.report(
+        message: "cannot convert value of type '\(rvType)' to expected type '\(storageType)'")
+        .set(location: node.rvalue.range?.lowerBound)
+        .add(range: node.rvalue.range)
       return
     }
 
