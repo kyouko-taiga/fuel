@@ -1,11 +1,11 @@
-func main(x) : \A a . (!a + [a: Int]) -> Void {
+func main(x) : \A a . (!a + [a: Int32]) -> Void {
   _0 = load x
 
   // #!error@+2 cannot find 'nope' in scope
   // #!error@+1 cannot determine the type of expression 'nope'
   _1 = load nope
 
-  _2 = salloc Int
+  _2 = salloc Int32
   store 1337, _2
   _3 = call consume, _2
 
@@ -15,4 +15,4 @@ func main(x) : \A a . (!a + [a: Int]) -> Void {
   return void
 }
 
-func consume(x) : \A a . ((!a + [a: Int]) -> Void)
+func consume(x) : \A a . ((!a + [a: Int32]) -> Void)

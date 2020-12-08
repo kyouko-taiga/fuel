@@ -388,7 +388,7 @@ public final class TypeChecker: Visitor {
       return BuiltinType.bool.qualified()
 
     case is IntLit:
-      return BuiltinType.int.qualified()
+      return BuiltinType.int32.qualified()
 
     case is VoidLit:
       return BuiltinType.void.qualified()

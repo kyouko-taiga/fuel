@@ -17,8 +17,8 @@ public final class BuiltinType: BareType {
   /// The built-in `Bool` type.
   public static let bool = BuiltinType(name: "Bool")
 
-  /// The built-in `Int` type.
-  public static let int = BuiltinType(name: "Int")
+  /// The built-in `Int32` type.
+  public static let int32 = BuiltinType(name: "Int32")
 
 }
 
@@ -26,7 +26,7 @@ extension BuiltinType: CaseIterable {
 
   public typealias AllCases = [BuiltinType]
 
-  public static let allCases = [any, void, bool, int]
+  public static let allCases = [any, void, bool, int32]
 
 }
 

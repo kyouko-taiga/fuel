@@ -6,8 +6,8 @@ func main() : () -> Void {
   return void
 }
 
-func f(x) : (Int) -> Int {
-  _0 = salloc Int
+func f(x) : (Int32) -> Int32 {
+  _0 = salloc Int32
 
   if true {
     store 0, _0

@@ -1,18 +1,18 @@
-func add(x, y) : (Int, Int) -> Int
+func add(x, y) : (Int32, Int32) -> Int32
 
 func main() : () -> Void {
-  foo = salloc { Int, { Int, Int } }
+  foo = salloc { Int32, { Int32, Int32 } }
   store 4, foo.0
 
   _0 = load foo.0
   _1 = load foo.1
-  // #!error@+1 cannot call function 'add' with arguments list of type 'Int, Junk<{Int, Int}>'
+  // #!error@+1 cannot call function 'add' with arguments list of type 'Int32, Junk<{Int32, Int32}>'
   _2 = call add, _0, _1
 
   store 5, foo.1.1
 
   _3 = load foo.1.0
-  // #!error@+1 cannot call function 'add' with arguments list of type 'Int, Junk<Int>'
+  // #!error@+1 cannot call function 'add' with arguments list of type 'Int32, Junk<Int32>'
   _4 = call add, _0, _3
 
   _5 = load foo.1.1

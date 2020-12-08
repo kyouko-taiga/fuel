@@ -2,7 +2,9 @@
 ///
 /// This is an example of a function that borrows two pointers to mutate them. The pointers cannot
 /// overlap, because the function requires a capability for each of them.
-func swap(x, y) : \A a, b . ((!a + [a: Int], !b + [b: Int]) -> Void + [a: Int] + [b: Int]) {
+func swap(x, y) : \A a, b . ((!a + [a: Int32], !b + [b: Int32])
+  -> Void + [a: Int32] + [b: Int32])
+{
   lhs = load x
   rhs = load y
 
