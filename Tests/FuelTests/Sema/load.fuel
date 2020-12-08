@@ -1,6 +1,5 @@
-func main() : () -> Void {
-  // #!error@+1 invalid l-value '42'
-  _0 = load 42
+func main(x) : \A a . (!a + [a: Int]) -> Void {
+  _0 = load x
 
   // #!error@+2 cannot find 'nope' in scope
   // #!error@+1 cannot determine the type of expression 'nope'

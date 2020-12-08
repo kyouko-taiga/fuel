@@ -265,12 +265,12 @@ public final class TypeChecker: Visitor {
 
   public func typeCheck(_ node: LoadStmt) throws {
     // Determine the type of the value reference.
-    let nodeType = try type(of: node.valueRef)
+    let nodeType = try type(of: node.lvalue)
 
     // There are two cases to consider; the first is when the l-value is an identifier, the second
     // is when it's a member expression.
     guard let loc = (nodeType.bareType as? LocationType)?.location else {
-      throw TypeError.invalidLValue(expr: node.valueRef)
+      throw TypeError.invalidLValue(expr: node.lvalue)
     }
 
     // Check if we hold a capability `[a: τ]`.

@@ -151,7 +151,7 @@ public struct Parser: StreamProcessor {
       let expr = try parseExpr()
       guard let lvalue = expr as? LValueExpr else {
         throw ParseError(
-          message: "target of store statement should be an identifier or a member expression",
+          message: "target of store statement must be an l-value",
           range: expr.range)
       }
 
@@ -192,7 +192,13 @@ public struct Parser: StreamProcessor {
       take(.load)
 
       let expr = try parseExpr()
-      let stmt = LoadStmt(name: String(name.value), valueRef: expr)
+      guard let lvalue = expr as? LValueExpr else {
+        throw ParseError(
+          message: "argument of load statement must be an l-value",
+          range: expr.range)
+      }
+
+      let stmt = LoadStmt(name: String(name.value), lvalue: lvalue)
       stmt.range = name.range.lowerBound ..< expr.range!.upperBound
       return stmt
 

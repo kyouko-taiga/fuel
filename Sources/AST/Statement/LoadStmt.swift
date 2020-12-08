@@ -2,14 +2,14 @@ import Basic
 
 public final class LoadStmt: Stmt, NamedDecl {
 
-  public init(name: String, valueRef: Expr) {
+  public init(name: String, lvalue: LValueExpr) {
     self.name = name
-    self.valueRef = valueRef
+    self.lvalue = lvalue
   }
 
   public var name: String
 
-  public var valueRef: Expr
+  public var lvalue: LValueExpr
 
   public var declContext: DeclContext?
 
@@ -24,7 +24,7 @@ public final class LoadStmt: Stmt, NamedDecl {
 extension LoadStmt: CustomStringConvertible {
 
   public var description: String {
-    return "\(name) = load \(valueRef)"
+    return "\(name) = load \(lvalue)"
   }
 
 }
