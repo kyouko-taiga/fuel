@@ -37,6 +37,12 @@ public struct TypeError: Error {
       range: range)
   }
 
+  static func inconsistentAssumption(assump: Assumption, range: SourceRange?) -> TypeError {
+    return TypeError(
+      message: "inconsistent assumption '[\(assump.key): \(assump.value)]'",
+      range: range)
+  }
+
   static func invalidLValue(expr: Expr) -> TypeError {
     return TypeError(
       message: "invalid l-value '\(expr)'",

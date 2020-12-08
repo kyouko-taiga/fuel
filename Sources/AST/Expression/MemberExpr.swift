@@ -16,8 +16,19 @@ public final class MemberExpr: LValueExpr {
   /// A reference to the aggregate.
   public var base: Expr
 
-  /// A o-based offset in the aggregate.
+  /// A 0-based offset in the aggregate.
   public var offset: Int
+
+  public var storageRef: (base: Expr, path: [Int]) {
+    var expr = base
+    var path = [offset]
+    while let memberExpr = expr as? MemberExpr {
+      expr = memberExpr.base
+      path.append(memberExpr.offset)
+    }
+
+    return (expr, path.reversed())
+  }
 
   public var range: SourceRange?
 

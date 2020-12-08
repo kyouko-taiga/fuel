@@ -40,7 +40,65 @@ public struct QualType {
     }
   }
 
-  /// The type obtained by applying the given substitution.
+  /// Defererences the type at the given path.
+  ///
+  /// - Parameter path: A collection of offsets.
+  public func dereference<C>(path: C) -> QualType? where C: Collection, C.Element == Int {
+    guard let i = path.first else {
+      return self
+    }
+
+    // TODO: Apply relevant qualifiers to the dereferenced type.
+    switch bareType {
+    case let tupleType as TupleType:
+      return tupleType.members[i].dereference(path: path.dropFirst())
+
+    case let junkType as JunkType:
+      return junkType.base.qualified().dereference(path: path)
+
+    default:
+      return nil
+    }
+  }
+
+  /// Returns the type obtained by substituting the given type at the specified path.
+  ///
+  /// An aggregate type is a tree, whose each node is identified by a unique sequence of member
+  /// offsets. This method returns a copy of this tree, where the node identified by the specified
+  /// path has been substituted for the given type.
+  ///
+  /// - Parameters:
+  ///   - path: A collection of member offsets identifying a specific type in the aggregate. `path`
+  ///     must be valid to dereference `bareType`.
+  ///   - substitute: A substitute type.
+  public func substituting<C>(typeAt path: C, with substitute: QualType) -> QualType
+  where C: Collection, C.Element == Int
+  {
+    guard let i = path.first else { return substitute }
+
+    var members: [QualType] = []
+
+    switch self.bareType {
+    case let tupleType as TupleType:
+      members = tupleType.members
+
+    case let junkType as JunkType:
+      guard let tupleType = junkType.base as? TupleType else { fallthrough }
+      members = tupleType.members.map({ member in
+        JunkType(base: member.bareType).qualified(by: member.quals)
+      })
+
+    default:
+      fatalError("\(self) is not dereferencable")
+    }
+
+    members[i] = members[i].substituting(typeAt: path.dropFirst(), with: substitute)
+    return TupleType(members: members).qualified(by: self.quals)
+  }
+
+  /// Returns the type obtained by applying the given symbol substitution table.
+  ///
+  /// - Parameter substitutions: A table mapping the symbols to susbtitute onto their substitution.
   public func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
     return QualType(bareType: bareType.substituting(substitutions), quals: quals)
   }

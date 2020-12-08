@@ -16,6 +16,10 @@ public final class IdentExpr: LValueExpr {
   /// The referred declaration.
   public var referredDecl: NamedDecl?
 
+  public var storageRef: (base: Expr, path: [Int]) {
+    return (self, [])
+  }
+
   public var range: SourceRange?
 
   public func accept<V>(_ visitor: V) where V: Visitor {
