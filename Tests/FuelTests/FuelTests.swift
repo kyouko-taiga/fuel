@@ -3,26 +3,16 @@ import XCTest
 import Basic
 import Fuel
 
-private let testsURL = URL(fileURLWithPath: #file)
-  .deletingLastPathComponent()
-
 class FuelTests: XCTestCase {
 
   let manager = FileManager.default
 
   func testSema() throws {
-    guard let enumerator = manager.enumerator(
-      at: testsURL.appendingPathComponent("Sema"),
-      includingPropertiesForKeys: [.isRegularFileKey],
-      options: [.skipsHiddenFiles])
-    else {
-      XCTFail("failed to open test folder")
-      return
-    }
-
     let sourceManager = SourceManager()
+    let urls = Bundle.module.urls(forResourcesWithExtension: "fuel", subdirectory: "Sema") ?? []
+    XCTAssertFalse(urls.isEmpty, "No test found")
 
-    for case let url as URL in enumerator where url.pathExtension == "fuel" {
+    for case let url in urls {
       // Load the source file.
       guard let source = try? sourceManager.load(contentsOf: url) else {
         XCTFail("Failed to load '\(url)'")

@@ -14,3 +14,8 @@ foo = 1337;
 ```
 In Fuel IR, the equivalent program would **not** grant type `int*` to `ham` until `foo` is assigned to a value at line 4.
 Hence, the declaration at line 3 would be illegal.
+
+## Tests
+
+Most tests are ran against actual Fuel IR code.
+Test cases are defined as source files in human-readable format, annotated with a special DSL to describe expected diagnostics. 
