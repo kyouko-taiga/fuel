@@ -87,6 +87,10 @@ class ParserTests: XCTestCase, ParserTestCase {
     if let stmt: LoadStmt = parse("foo = load bar", with: { try $0.parseStmt() }) {
       XCTAssertEqual(stmt.name, "foo")
     }
+
+    if let stmt: LoadStmt = parse("foo = load bar.1", with: { try $0.parseStmt() }) {
+      XCTAssertEqual(stmt.name, "foo")
+    }
   }
 
   func testParseCallStmt() {
