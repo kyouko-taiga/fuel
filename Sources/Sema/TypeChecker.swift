@@ -264,21 +264,24 @@ public final class TypeChecker: Visitor {
   }
 
   public func typeCheck(_ node: LoadStmt) throws {
-    // Determine the type of the value reference.
-    let nodeType = try type(of: node.lvalue)
-
-    // There are two cases to consider; the first is when the l-value is an identifier, the second
-    // is when it's a member expression.
-    guard let loc = (nodeType.bareType as? LocationType)?.location else {
-      throw TypeError.invalidLValue(expr: node.lvalue)
+    // Determine the type of the l-value.
+    let (baseExpr, path) = node.lvalue.storageRef
+    let lvBaseType = try type(of: baseExpr)
+    guard let loc = (lvBaseType.bareType as? LocationType)?.location else {
+      throw TypeError.invalidLValue(expr: baseExpr)
     }
 
-    // Check if we hold a capability `[a: τ]`.
-    guard let tau = typingContext[loc] else {
+    // Check that we have the capability to dereference the (base) location.
+    guard let baseType = typingContext[loc] else {
       throw TypeError.missingCapability(symbol: loc, type: anyType, range: node.range)
     }
 
-    typingContext[Symbol(decl: node)] = tau
+    // Dereference the storage's type.
+    guard let storageType = baseType.dereference(path: path) else {
+      throw TypeError.invalidMemberOffset(expr: node.lvalue)
+    }
+
+    typingContext[Symbol(decl: node)] = storageType
   }
 
   public func typeCheck(_ node: ReturnStmt) throws {
