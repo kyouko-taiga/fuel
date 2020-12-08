@@ -31,7 +31,13 @@ public final class TypeChecker: Visitor {
   /// The unqualified `Any` type.
   private let anyType = QualType(bareType: BuiltinType.any)
 
+  /// A flag that is set when the pass raised an error.
+  @usableFromInline var hasErrors = false
+
   public func visit(_ node: Module) {
+    hasErrors = false
+    node.stateGoals.subtract([.typeChecked])
+
     // Create an initial a typing context, with one entry for each type and function declaration.
     var context: TypingContext = [:]
     for decl in node.funcDecls {
@@ -43,6 +49,10 @@ public final class TypeChecker: Visitor {
       typingContext = context
       typeCheck(decl)
     }
+
+    if !hasErrors {
+      node.stateGoals.insert(.typeChecked)
+    }
   }
 
   /// Visits the given node with the specified type checking method.
@@ -52,6 +62,7 @@ public final class TypeChecker: Visitor {
     do {
       try checker(node)
     } catch let error as TypeError {
+      hasErrors = true
       error.report(in: astContext)
     } catch {
       fatalError("unreachable")
@@ -129,6 +140,7 @@ public final class TypeChecker: Visitor {
         for assumption in eta {
           let prevAssumpType = typingContext[assumption.key]
           guard (prevAssumpType == nil) || (prevAssumpType == assumption.value) else {
+            hasErrors = true
             TypeError
               .inconsistentAssumption(assump: assumption, range: param.range)
               .report(in: astContext)
@@ -201,6 +213,7 @@ public final class TypeChecker: Visitor {
         let lhs = try type(of: arg)
         solver.constraints.append(TypeSolver.Constraint(lhs: .type(lhs), rhs: .type(param)))
       } catch let error as TypeError {
+        hasErrors = true
         error.report(in: astContext)
       }
     }
@@ -311,6 +324,7 @@ public final class TypeChecker: Visitor {
     // return type.
     for assumption in assumptions {
       guard let tau = typingContext[assumption.key] else {
+        hasErrors = true
         TypeError
           .missingCapability(symbol: assumption.key, type: assumption.value, range: node.range)
           .report(in: astContext)
@@ -318,6 +332,7 @@ public final class TypeChecker: Visitor {
       }
 
       guard tau <= assumption.value else {
+        hasErrors = true
         TypeError
           .invalidAssumptionConversion(
             a1: (assumption.key, tau),

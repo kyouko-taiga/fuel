@@ -23,10 +23,33 @@ public final class Module: Identifiable {
   public let id: ID
 
   /// The type declarations of the module.
-  public var typeDecls: [NominalTypeDecl]
+  public var typeDecls: [NominalTypeDecl] {
+    didSet { stateGoals.removeAll() }
+  }
 
   /// The function declarations of the module.
-  public var funcDecls: [FuncDecl]
+  public var funcDecls: [FuncDecl] {
+    didSet { stateGoals.removeAll() }
+  }
+
+  /// Indicates compilation state of the module.
+  ///
+  /// This property is meant to be used internally. It is reset every time the module's contents
+  /// change, and updated at the end of every stage of compilation.
+  public var stateGoals: Set<StateGoal> = []
+
+  public enum StateGoal {
+
+    /// All names have been properly resolved.
+    case namesResolved
+
+    /// All types have been properly resolved.
+    case typesResolved
+
+    /// All declarations have been properly type-checked.
+    case typeChecked
+
+  }
 
   /// The built-in module.
   public static let builtin: Module = {

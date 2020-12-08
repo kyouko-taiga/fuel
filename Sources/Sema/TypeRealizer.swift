@@ -16,6 +16,20 @@ public final class TypeRealizer: Visitor {
   /// An error type.
   private let errorType = QualType(bareType: ErrorType.get)
 
+  /// A flag that is set when the pass raised an error.
+  private var hasErrors = false
+
+  public func visit(_ node: Module) {
+    hasErrors = false
+    node.stateGoals.subtract([.typesResolved, .typeChecked])
+
+    traverse(node)
+
+    if !hasErrors {
+      node.stateGoals.insert(.typesResolved)
+    }
+  }
+
   public func visit(_ node: FuncDecl) {
     node.sign.accept(self)
 
@@ -30,6 +44,7 @@ public final class TypeRealizer: Visitor {
 
     default:
       funcType = nil
+      hasErrors = true
       astContext.report(message: "'\(node.sign)' is not a function type")
         .set(location: node.sign.range?.lowerBound)
         .add(range: node.sign.range)
@@ -38,6 +53,7 @@ public final class TypeRealizer: Visitor {
     if funcType != nil {
       node.type = node.sign.type
       if node.params.count != funcType!.params.count {
+        hasErrors = true
         astContext.report(message: "incompatible function signature")
           .set(location: node.sign.range?.lowerBound)
           .add(range: node.sign.range)
@@ -96,6 +112,7 @@ public final class TypeRealizer: Visitor {
       // Check that the assumption is not inconsistent with the ones already realized.
       let symbol = Symbol(decl: decl)
       guard assumptions[symbol] == nil else {
+        hasErrors = true
         astContext.report(message: "inconsistent assumption")
           .set(location: assumption.range?.lowerBound)
           .add(range: assumption.range)

@@ -19,9 +19,19 @@ public final class NameBinder: Visitor {
   /// The current declaration context.
   private var declContext: DeclContext?
 
+  /// A flag that is set when the pass raised an error.
+  private var hasErrors = false
+
   public func visit(_ node: Module) {
+    hasErrors = false
+    node.stateGoals.removeAll()
+
     declContext = node
     traverse(node)
+
+    if !hasErrors {
+      node.stateGoals.insert(.namesResolved)
+    }
   }
 
   public func visit(_ node: BraceStmt) {
@@ -78,6 +88,7 @@ public final class NameBinder: Visitor {
     if let decl = declContext?.lookup(name: node.name) {
       node.referredDecl = decl
     } else {
+      hasErrors = true
       astContext.report(message: "cannot find '\(node.name)' in scope")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
@@ -93,11 +104,13 @@ public final class NameBinder: Visitor {
       node.referredDecl = typeDecl
 
     case .some:
+      hasErrors = true
       astContext.report(message: "'\(node.name)' is not a type")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
 
     case nil:
+      hasErrors = true
       astContext.report(message: "cannot find '\(node.name)' in scope")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
@@ -106,6 +119,7 @@ public final class NameBinder: Visitor {
 
   private func checkDuplicateDecl(_ node: NamedDecl) {
     if node.declContext!.decls.contains(where: { ($0 !== node) && ($0.name == node.name) }) {
+      hasErrors = true
       astContext.report(message: "duplicate declaration '\(node.name)'")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
