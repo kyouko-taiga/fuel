@@ -9,3 +9,11 @@ public final class JunkType: BareType {
   public let base: BareType
 
 }
+
+extension JunkType: CustomStringConvertible {
+
+  public var description: String {
+    return "Junk<\(base)>"
+  }
+
+}
