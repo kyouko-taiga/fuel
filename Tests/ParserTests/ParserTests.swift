@@ -2,8 +2,6 @@ import XCTest
 
 import AST
 import Basic
-import Lexer
-import Parser
 
 class ParserTests: XCTestCase, ParserTestCase {
 
