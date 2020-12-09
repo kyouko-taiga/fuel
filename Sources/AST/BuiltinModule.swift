@@ -85,6 +85,7 @@ public final class BuiltinModule: Module {
 
     let params = inputs.indices.map({ i in FuncParamDecl(name: "x\(i)") })
     let decl = FuncDecl(name: name, params: params, sign: sign, body: nil)
+    decl.type = sign.type
 
     for param in params {
       param.declContext = decl
