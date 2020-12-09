@@ -43,7 +43,10 @@ class FuelTests: XCTestCase {
       }
 
       let checker = DiagnosticChecker(sourceManager: sourceManager, expectations: expectations)
-      let driver = Driver(sourceManager: sourceManager, pipeline: [.parse(url), .runSema])
+      let driver = Driver(
+        moduleID: "test",
+        sourceManager: sourceManager,
+        pipeline: [.parse(url), .runSema])
       driver.astContext.diagnosticConsumer = checker
 
       try driver.execute()

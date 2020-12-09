@@ -6,7 +6,7 @@ import Fuel
 
 func main() throws {
   // Create a compilation driver.
-  let driver = Driver()
+  let driver = Driver(moduleID: "main")
   driver.astContext.diagnosticConsumer = Console(sourceManager: driver.sourceManager)
 
   // Configure the driver's pipeline.
