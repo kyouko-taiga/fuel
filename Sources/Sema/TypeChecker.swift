@@ -38,15 +38,9 @@ public final class TypeChecker: Visitor {
     hasErrors = false
     node.stateGoals.subtract([.typeChecked])
 
-    // Create an initial a typing context, with one entry for each type and function declaration.
-    var context: TypingContext = [:]
-    for decl in node.funcDecls {
-      context[Symbol(decl: decl)] = decl.type
-    }
-
     // Type-check each function declaration.
     for decl in node.funcDecls {
-      typingContext = context
+      typingContext = [:]
       typeCheck(decl)
     }
 
@@ -412,10 +406,18 @@ public final class TypeChecker: Visitor {
       guard let decl = ident.referredDecl else {
         throw TypeError.undefinedExprType(expr: e)
       }
-      guard let type = typingContext[Symbol(decl: decl)] else {
-        throw TypeError.undefinedExprType(expr: e)
+
+      if let funcDecl = decl as? FuncDecl {
+        guard let type = funcDecl.type else {
+          throw TypeError.undefinedExprType(expr: e)
+        }
+        return type
+      } else {
+        guard let type = typingContext[Symbol(decl: decl)] else {
+          throw TypeError.undefinedExprType(expr: e)
+        }
+        return type
       }
-      return type
 
     case let member as MemberExpr:
       let bareType: BareType
