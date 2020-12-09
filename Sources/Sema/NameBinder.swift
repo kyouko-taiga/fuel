@@ -118,7 +118,7 @@ public final class NameBinder: Visitor {
   }
 
   private func checkDuplicateDecl(_ node: NamedDecl) {
-    if node.declContext!.decls.contains(where: { ($0 !== node) && ($0.name == node.name) }) {
+    if node.declContext!.decls(named: node.name).contains(where: { $0 !== node }) {
       hasErrors = true
       astContext.report(message: "duplicate declaration '\(node.name)'")
         .set(location: node.range?.lowerBound)

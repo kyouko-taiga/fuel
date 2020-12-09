@@ -175,7 +175,12 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << "(Module"
     self << " \"\(node.id)\""
 
-    for decl in node.decls {
+    for decl in node.typeDecls {
+      self << "\n"
+      withInc { decl.accept(self) }
+    }
+
+    for decl in node.funcDecls {
       self << "\n"
       withInc { decl.accept(self) }
     }

@@ -57,8 +57,16 @@ extension Module: DeclContext {
 
   public final var parent: DeclContext? { nil }
 
-  public var decls: [NamedDecl] {
-    return (typeDecls as [NamedDecl]) + (funcDecls as [NamedDecl])
+  public final func decls(named name: String) -> AnySequence<NamedDecl> {
+    let types = typeDecls.filter({ $0.name == name }) as [NamedDecl]
+    let funcs = funcDecls.filter({ $0.name == name }) as [NamedDecl]
+    return AnySequence(types + funcs)
+  }
+
+  public final func firstDecl(named name: String) -> NamedDecl? {
+    return
+      typeDecls.first(where: { $0.name == name }) ??
+      funcDecls.first(where: { $0.name == name })
   }
 
 }

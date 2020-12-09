@@ -15,16 +15,16 @@ extension DeclContext {
     var declContext: DeclContext = self
     while true {
       // Search for a match in the current context.
-      if let match = declContext.decls.first(where: { $0.name == name }) {
+      if let match = declContext.firstDecl(named: name) {
         // Return the the first match we find. Note that there shouldn't be more than one single
         // match, as symbols can't be overloaded.
         return match
       } else if let parent = declContext.parent {
         // Move to the parent context.
         declContext = parent
-      } else if declContext !== Module.builtin {
+      } else if declContext !== BuiltinModule.instance {
         // Move to the built-in context.
-        declContext = Module.builtin
+        declContext = BuiltinModule.instance
       } else {
         // We reached the top-level built-in context; the lookup failed.
         return nil

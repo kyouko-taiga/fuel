@@ -34,14 +34,20 @@ public final class FuncDecl: NamedDecl, DeclContext {
 
   public var parent: DeclContext?
 
-  public var decls: [NamedDecl] { params as [NamedDecl] }
-
   public var declContext: DeclContext?
 
   public var range: SourceRange?
 
   public func accept<V>(_ visitor: V) where V: Visitor {
     visitor.visit(self)
+  }
+
+  public func decls(named name: String) -> AnySequence<NamedDecl> {
+    return AnySequence(params.filter({ $0.name == name }))
+  }
+
+  public func firstDecl(named name: String) -> NamedDecl? {
+    return params.first(where: { $0.name == name })
   }
 
 }

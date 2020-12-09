@@ -21,6 +21,23 @@ public final class BraceStmt: Stmt, DeclContext {
     visitor.visit(self)
   }
 
+  public func decls(named name: String) -> AnySequence<NamedDecl> {
+    return AnySequence(stmts.compactMap({ (stmt: Stmt) -> NamedDecl? in
+      if let decl = stmt as? NamedDecl, decl.name == name {
+        return decl
+      } else {
+        return nil
+      }
+    }))
+  }
+
+  public func firstDecl(named name: String) -> NamedDecl? {
+    for case let decl as NamedDecl in stmts where decl.name == name {
+      return decl
+    }
+    return nil
+  }
+
 }
 
 extension BraceStmt: MutableCollection {
