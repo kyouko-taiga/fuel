@@ -3,7 +3,7 @@
 /// A module (a.k.a. compilation unit) is an abstraction over one or several source files (a.k.a.
 /// translation units), that forms a single object file. Modules can then be linked together to
 /// create a single executable file or library.
-public final class Module: Identifiable {
+public class Module: Identifiable {
 
   public typealias ID = String
 
@@ -13,22 +13,22 @@ public final class Module: Identifiable {
   ///   - id: The module's identifier.
   ///   - typeDecls: The type declaratiosn of the module.
   ///   - funcDecls: The function declarations of the module.
-  public init(id: ID, typeDecls: [NominalTypeDecl], funcDecls: [FuncDecl]) {
+  public init(id: ID, typeDecls: [NominalTypeDecl] = [], funcDecls: [FuncDecl] = []) {
     self.id = id
     self.typeDecls = typeDecls
     self.funcDecls = funcDecls
   }
 
   /// The module's ID.
-  public let id: ID
+  public final let id: ID
 
   /// The type declarations of the module.
-  public var typeDecls: [NominalTypeDecl] {
+  public final var typeDecls: [NominalTypeDecl] {
     didSet { stateGoals.removeAll() }
   }
 
   /// The function declarations of the module.
-  public var funcDecls: [FuncDecl] {
+  public final var funcDecls: [FuncDecl] {
     didSet { stateGoals.removeAll() }
   }
 
@@ -36,7 +36,7 @@ public final class Module: Identifiable {
   ///
   /// This property is meant to be used internally. It is reset every time the module's contents
   /// change, and updated at the end of every stage of compilation.
-  public var stateGoals: Set<StateGoal> = []
+  public final var stateGoals: Set<StateGoal> = []
 
   public enum StateGoal {
 
@@ -51,23 +51,11 @@ public final class Module: Identifiable {
 
   }
 
-  /// The built-in module.
-  public static let builtin: Module = {
-    let module = Module(id: "_Builtin", typeDecls: [], funcDecls: [])
-
-    // Inject built-in type declarations.
-    for builtin in BuiltinType.allCases {
-      module.typeDecls.append(BuiltinTypeDecl(type: builtin))
-    }
-
-    return module
-  }()
-
 }
 
 extension Module: DeclContext {
 
-  public var parent: DeclContext? { nil }
+  public final var parent: DeclContext? { nil }
 
   public var decls: [NamedDecl] {
     return (typeDecls as [NamedDecl]) + (funcDecls as [NamedDecl])
@@ -77,7 +65,7 @@ extension Module: DeclContext {
 
 extension Module: CustomStringConvertible {
 
-  public var description: String {
+  public final var description: String {
     return "Module(\(id))"
   }
 

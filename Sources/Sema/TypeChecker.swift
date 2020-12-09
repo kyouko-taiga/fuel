@@ -29,7 +29,7 @@ public final class TypeChecker: Visitor {
   private var funcType: FuncType!
 
   /// The unqualified `Any` type.
-  private let anyType = QualType(bareType: BuiltinType.any)
+  private let anyType = QualType(bareType: BuiltinModule.instance.any)
 
   /// A flag that is set when the pass raised an error.
   @usableFromInline var hasErrors = false
@@ -257,10 +257,10 @@ public final class TypeChecker: Visitor {
 
     // Check that the condition is a subtype of Bool.
     let tau = try type(of: node.cond)
-    guard tau <= BuiltinType.bool.qualified() else {
+    guard tau <= BuiltinModule.instance.bool.qualified() else {
       throw TypeError.invalidTypeConversion(
         t1: tau,
-        t2: BuiltinType.bool.qualified(),
+        t2: BuiltinModule.instance.bool.qualified(),
         range: node.cond.range)
     }
 
@@ -400,13 +400,13 @@ public final class TypeChecker: Visitor {
   private func type(of e: Expr) throws -> QualType {
     switch e {
     case is BoolLit:
-      return BuiltinType.bool.qualified()
+      return BuiltinModule.instance.bool.qualified()
 
     case is IntLit:
-      return BuiltinType.int32.qualified()
+      return BuiltinModule.instance.int32.qualified()
 
     case is VoidLit:
-      return BuiltinType.void.qualified()
+      return BuiltinModule.instance.void.qualified()
 
     case let ident as IdentExpr:
       guard let decl = ident.referredDecl else {

@@ -6,7 +6,7 @@ public final class ASTContext {
 
   /// Creates a new AST context.
   public init() {
-    modules = [Module.builtin.id: Module.builtin]
+    modules = [BuiltinModule.instance.id: BuiltinModule.instance]
   }
 
   /// The modules loaded in the AST context.

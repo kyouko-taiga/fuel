@@ -27,7 +27,7 @@ public class BareType {
   /// - Parameter other: Another semantic type.
   public func isSubtype(of other: BareType) -> Bool {
     // τ ≤ τ, τ ≤ Any
-    if isEqual(to: other) || other.isEqual(to: BuiltinType.any) {
+    if isEqual(to: other) || other.isEqual(to: BuiltinModule.instance.any) {
       return true
     }
 
@@ -45,7 +45,7 @@ public class BareType {
   public func join(with other: BareType) -> BareType {
     return isEqual(to: other)
       ? self
-      : BuiltinType.any
+      : BuiltinModule.instance.any
   }
 
 }

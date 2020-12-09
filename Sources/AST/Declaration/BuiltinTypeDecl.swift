@@ -5,20 +5,19 @@ public final class BuiltinTypeDecl: NominalTypeDecl {
 
   /// Creates a new built-in type declaration.
   ///
-  /// - Parameter type: The semantic type represented by the declaration.
+  /// - Parameter name: The name of the built-in type.
   init(type: BuiltinType) {
     self.type = type
-    name = type.name
-    range = SourceLocation.unknown ..< SourceLocation.unknown
+    type.decl = self
   }
 
-  public let name: String
+  public var name: String { (type as! BuiltinType).name }
 
   public let type: BareType?
 
   public weak var declContext: DeclContext?
 
-  public let range: SourceRange?
+  public let range: SourceRange? = SourceLocation.unknown ..< SourceLocation.unknown
 
   public func accept<V>(_ visitor: V) where V: Visitor {
     visitor.visit(self)

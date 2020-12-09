@@ -1,32 +1,24 @@
 /// A built-in type.
 public final class BuiltinType: BareType {
 
-  private init(name: String) {
+  /// Creates a new built-in type.
+  init(name: String) {
     self.name = name
   }
+
+  /// The type's declaration.
+  public internal(set) weak var decl: BuiltinTypeDecl?
 
   /// The type's name.
   public let name: String
 
-  /// The built-in `Any` type.
-  public static let any = BuiltinType(name: "Any")
-
-  /// The built-in `Void` type.
-  public static let void = BuiltinType(name: "Void")
-
-  /// The built-in `Bool` type.
-  public static let bool = BuiltinType(name: "Bool")
-
-  /// The built-in `Int32` type.
-  public static let int32 = BuiltinType(name: "Int32")
-
 }
 
-extension BuiltinType: CaseIterable {
+extension BuiltinType: Equatable {
 
-  public typealias AllCases = [BuiltinType]
-
-  public static let allCases = [any, void, bool, int32]
+  public static func == (lhs: BuiltinType, rhs: BuiltinType) -> Bool {
+    return lhs === rhs
+  }
 
 }
 
