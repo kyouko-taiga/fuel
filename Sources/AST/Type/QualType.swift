@@ -128,7 +128,7 @@ public struct QualType {
 extension QualType: Equatable {
 
   public static func == (lhs: QualType, rhs: QualType) -> Bool {
-    return (lhs.quals == rhs.quals) && lhs.bareType.isEqual(to: rhs.bareType)
+    return (lhs.bareType === rhs.bareType) && (lhs.quals == rhs.quals)
   }
 
 }

@@ -28,19 +28,12 @@ public class BareType {
     return self
   }
 
-  /// Returns whether this type is equal to another one.
-  ///
-  /// - Parameter other: Another semantic type.
-  public func isEqual(to other: BareType) -> Bool {
-    return self === other
-  }
-
   /// Returns whether this type is a subtype of another one.
   ///
   /// - Parameter other: Another semantic type.
   public func isSubtype(of other: BareType) -> Bool {
     // τ ≤ τ, τ ≤ Any
-    if isEqual(to: other) || other.isEqual(to: context.builtin.any) {
+    if (self === other) || (other === context.builtin.any) {
       return true
     }
 
@@ -56,7 +49,7 @@ public class BareType {
   ///
   /// - Parameter other: Another semantic type.
   public func join(with other: BareType) -> BareType {
-    return isEqual(to: other)
+    return (self === other)
       ? self
       : context.builtin.any
   }
