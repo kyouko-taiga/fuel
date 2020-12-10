@@ -13,14 +13,6 @@ public final class BuiltinType: BareType {
 
 }
 
-extension BuiltinType: Equatable {
-
-  public static func == (lhs: BuiltinType, rhs: BuiltinType) -> Bool {
-    return lhs === rhs
-  }
-
-}
-
 extension BuiltinType: CustomStringConvertible {
 
   public var description: String {

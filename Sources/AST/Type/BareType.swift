@@ -55,3 +55,11 @@ public class BareType {
   }
 
 }
+
+extension BareType: Equatable {
+
+  public static func == (lhs: BareType, rhs: BareType) -> Bool {
+    return lhs === rhs
+  }
+
+}
