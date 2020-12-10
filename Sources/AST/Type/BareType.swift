@@ -3,6 +3,19 @@
 /// Base types, once created, are immutable.
 public class BareType {
 
+  /// Creates a new bare type.
+  init(context: ASTContext) {
+    self.context = context
+  }
+
+  /// The unique data bytes of this type.
+  var bytes: [UInt8] {
+    return withUnsafeBytes(of: self, Array.init)
+  }
+
+  /// The AST context in which this type was uniqued.
+  public unowned let context: ASTContext
+
   /// The type qualified by the given qualifiers.
   ///
   /// - Parameter quals: A set of type qualifiers.
@@ -27,7 +40,7 @@ public class BareType {
   /// - Parameter other: Another semantic type.
   public func isSubtype(of other: BareType) -> Bool {
     // τ ≤ τ, τ ≤ Any
-    if isEqual(to: other) || other.isEqual(to: BuiltinModule.instance.any) {
+    if isEqual(to: other) || other.isEqual(to: context.builtin.any) {
       return true
     }
 
@@ -45,7 +58,7 @@ public class BareType {
   public func join(with other: BareType) -> BareType {
     return isEqual(to: other)
       ? self
-      : BuiltinModule.instance.any
+      : context.builtin.any
   }
 
 }

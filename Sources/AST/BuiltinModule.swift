@@ -1,55 +1,54 @@
 public final class BuiltinModule: Module {
 
-  private init() {
-    super.init(id: "_Builtin")
+  init(context: ASTContext) {
+    // Create the built-in types.
+    any   = BuiltinType(context: context, name: "Any")
+    void  = BuiltinType(context: context, name: "Void")
+    bool  = BuiltinType(context: context, name: "Bool")
+    int32 = BuiltinType(context: context, name: "Int32")
+    int64 = BuiltinType(context: context, name: "Int64")
 
-    // Create declarations for all built-in types.
-    var builtinTypeDecls: [BuiltinTypeDecl] = []
-    for type in types {
-      let decl = BuiltinTypeDecl(type: type)
-      decl.declContext = self
-      builtinTypeDecls.append(decl)
-    }
+    super.init(id: "_Builtin", context: context, typeDecls: [
+      "Any"   : BuiltinTypeDecl(type: any),
+      "Void"  : BuiltinTypeDecl(type: void),
+      "Bool"  : BuiltinTypeDecl(type: bool),
+      "Int32" : BuiltinTypeDecl(type: int32),
+      "Int64" : BuiltinTypeDecl(type: int64),
+    ])
 
-    // Create declarations for all built-in functions.
+    // Create the built-in functions.
     var builtinFuncDecls: [FuncDecl] = []
+
     for type in integers {
-      let decl = binaryOperation("add_\(type.name)", type.decl!)
+      let decl = binaryOperation(
+        "add_\(type.name)",
+        typeDecls[type.name] as! BuiltinTypeDecl)
       decl.declContext = self
       builtinFuncDecls.append(decl)
     }
 
-    // Finalize the built-in module.
-    typeDecls = builtinTypeDecls
-    funcDecls = builtinFuncDecls
+    // Mark the module as type-checked.
     stateGoals = [.namesResolved, .typeChecked, .typesResolved]
   }
 
-  public static let instance = BuiltinModule()
-
   /// The built-in `Any` type.
-  public let any = BuiltinType(name: "Any")
+  public let any  : BuiltinType
 
   /// The built-in `Void` type.
-  public let void = BuiltinType(name: "Void")
+  public let void : BuiltinType
 
   /// The built-in `Bool` type.
-  public let bool = BuiltinType(name: "Bool")
+  public let bool : BuiltinType
 
   /// The built-in `Int32` type.
-  public let int32 = BuiltinType(name: "Int32")
+  public let int32: BuiltinType
 
   /// The built-in `Int64` type.
-  public let int64 = BuiltinType(name: "Int64")
+  public let int64: BuiltinType
 
   /// The declarations of all built-in integer types.
   public var integers: [BuiltinType] {
     return [int32, int64]
-  }
-
-  /// The declarations of all built-in types.
-  public var types: [BuiltinType] {
-    return [any, void, bool, int32, int64]
   }
 
   /// Creates a binary operation.
@@ -68,17 +67,17 @@ public final class BuiltinModule: Module {
     let inputSigns = inputs.enumerated().map({ (i: Int, input: BuiltinTypeDecl) -> IdentSign in
       let sign = IdentSign(name: input.name)
       sign.referredDecl = input
-      sign.type = input.type!.qualified()
+      sign.type = (input.type as! BuiltinType).qualified()
       return sign
     })
 
     let outputSign = IdentSign(name: output.name)
     outputSign.referredDecl = output
-    outputSign.type = output.type!.qualified()
+    outputSign.type = (output.type as! BuiltinType).qualified()
 
     let sign = FuncSign(params: inputSigns, output: outputSign)
     sign.type =
-      FuncType(
+      context.funcType(
         params: inputSigns.map({ $0.type! }),
         output: outputSign.type!)
       .qualified()

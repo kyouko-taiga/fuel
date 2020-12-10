@@ -175,17 +175,17 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << "(Module"
     self << " \"\(node.id)\""
 
-    for decl in node.typeDecls {
-      self << "\n"
-      withInc { decl.accept(self) }
-    }
-
-    for decl in node.funcDecls {
+    for decl in node.allDecls {
       self << "\n"
       withInc { decl.accept(self) }
     }
 
     self << ")"
+  }
+
+  public func visit(_ node: BuiltinTypeDecl) {
+    self << lead
+    self << "(BuiltinTypeDecl \"\(node.name)\")"
   }
 
   public func visit(_ node: BundledSign) {

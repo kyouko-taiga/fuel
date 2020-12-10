@@ -11,14 +11,20 @@ public final class Driver {
 
   /// Create a new compilation driver.
   public init(
+    moduleID: String,
     sourceManager: SourceManager = SourceManager(),
     pipeline: [CompilerAction] = [],
     astContext: ASTContext = ASTContext()
   ) {
+    self.module = Module(id: moduleID, context: astContext)
+
     self.pipeline = pipeline
     self.sourceManager = sourceManager
     self.astContext = astContext
   }
+
+  /// The driver's module.
+  public let module: Module
 
   /// The driver's pipeline.
   public var pipeline: [CompilerAction]
@@ -28,9 +34,6 @@ public final class Driver {
 
   /// The driver's AST context.
   public let astContext: ASTContext
-
-  /// The driver's AST.
-  public var module: Module?
 
   /// Executes the driver's pipeline.
   public func execute() throws {
@@ -62,15 +65,10 @@ public final class Driver {
       decls.append(decl)
     }
 
-    module = Module(
-      id: url.absoluteString,
-      typeDecls: [],
-      funcDecls: decls)
+    module.merge(funcDecls: decls)
   }
 
   public func runSema() {
-    guard let module = self.module else { return }
-
     let p0 = NameBinder(astContext: astContext)
     p0.visit(module)
     let p1 = TypeRealizer(astContext: astContext)

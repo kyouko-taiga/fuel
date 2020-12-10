@@ -22,12 +22,15 @@ extension DeclContext {
       } else if let parent = declContext.parent {
         // Move to the parent context.
         declContext = parent
-      } else if declContext !== BuiltinModule.instance {
-        // Move to the built-in context.
-        declContext = BuiltinModule.instance
       } else {
-        // We reached the top-level built-in context; the lookup failed.
-        return nil
+        guard let module = declContext as? Module else { return nil }
+
+        // Move to the built-in module unless we already searched it.
+        if !(module is BuiltinModule) {
+          declContext = module.context.builtin
+        } else {
+          return nil
+        }
       }
     }
   }

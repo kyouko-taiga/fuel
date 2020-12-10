@@ -63,6 +63,14 @@ extension Symbol: Hashable {
 
 }
 
+extension Symbol: Comparable {
+
+  public static func < (lhs: Symbol, rhs: Symbol) -> Bool {
+    return lhs.id < rhs.id
+  }
+
+}
+
 extension Symbol: CustomStringConvertible {
 
   public var description: String {
@@ -72,15 +80,6 @@ extension Symbol: CustomStringConvertible {
     } else {
       return "#\(addr)"
     }
-  }
-
-}
-
-extension NamedDecl {
-
-  /// The symbol identifying this declaration.
-  public var symbol: Symbol {
-    return Symbol(decl: self)
   }
 
 }

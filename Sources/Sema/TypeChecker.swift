@@ -11,6 +11,7 @@ public final class TypeChecker: Visitor {
   /// - Parameter astContext: The AST context in which the pass is ran.
   public init(astContext: ASTContext) {
     self.astContext = astContext
+    self.anyType = astContext.builtin.any.qualified()
   }
 
   /// The AST context in which the pass is ran.
@@ -29,7 +30,7 @@ public final class TypeChecker: Visitor {
   private var funcType: FuncType!
 
   /// The unqualified `Any` type.
-  private let anyType = QualType(bareType: BuiltinModule.instance.any)
+  private let anyType: QualType
 
   /// A flag that is set when the pass raised an error.
   @usableFromInline var hasErrors = false
@@ -39,7 +40,7 @@ public final class TypeChecker: Visitor {
     node.stateGoals.subtract([.typeChecked])
 
     // Type-check each function declaration.
-    for decl in node.funcDecls {
+    for decl in node.funcDecls.values {
       typingContext = [:]
       typeCheck(decl)
     }
@@ -251,10 +252,10 @@ public final class TypeChecker: Visitor {
 
     // Check that the condition is a subtype of Bool.
     let tau = try type(of: node.cond)
-    guard tau <= BuiltinModule.instance.bool.qualified() else {
+    guard tau <= astContext.builtin.bool.qualified() else {
       throw TypeError.invalidTypeConversion(
         t1: tau,
-        t2: BuiltinModule.instance.bool.qualified(),
+        t2: astContext.builtin.bool.qualified(),
         range: node.cond.range)
     }
 
@@ -349,8 +350,8 @@ public final class TypeChecker: Visitor {
 
     // Allocate a new location and create a capacity for it.
     let a = alloc()
-    typingContext[Symbol(decl: node)] = LocationType(location: a).qualified()
-    typingContext[a] = JunkType(base: storageType.bareType).qualified(by: storageType.quals)
+    typingContext[Symbol(decl: node)] = astContext.locationType(location: a).qualified()
+    typingContext[a] = astContext.junkType(base: storageType.bareType).qualified(by: storageType.quals)
   }
 
   public func typeCheck(_ node: StoreStmt) throws {
@@ -394,13 +395,13 @@ public final class TypeChecker: Visitor {
   private func type(of e: Expr) throws -> QualType {
     switch e {
     case is BoolLit:
-      return BuiltinModule.instance.bool.qualified()
+      return astContext.builtin.bool.qualified()
 
     case is IntLit:
-      return BuiltinModule.instance.int32.qualified()
+      return astContext.builtin.int32.qualified()
 
     case is VoidLit:
-      return BuiltinModule.instance.void.qualified()
+      return astContext.builtin.void.qualified()
 
     case let ident as IdentExpr:
       guard let decl = ident.referredDecl else {

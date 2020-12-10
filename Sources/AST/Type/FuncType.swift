@@ -1,14 +1,21 @@
 /// A function type.
 public final class FuncType: BareType {
 
-  /// Initializes a function type.
-  ///
-  /// Parameters:
-  /// - params: The function's parameters.
-  /// - output: The function's output type.
-  public init(params: [QualType], output: QualType) {
+  init(context: ASTContext, params: [QualType], output: QualType) {
     self.params = params
     self.output = output
+    super.init(context: context)
+  }
+
+  override var bytes: [UInt8] {
+    var bs: [UInt8] = []
+    withUnsafeBytes(of: BundledType.self, { bs.append(contentsOf: $0) })
+    for param in params {
+      withUnsafeBytes(of: param, { bs.append(contentsOf: $0) })
+    }
+    withUnsafeBytes(of: output, { bs.append(contentsOf: $0) })
+    withUnsafeBytes(of: context, { bs.append(contentsOf: $0) })
+    return bs
   }
 
   /// The function's parameters.
@@ -19,7 +26,7 @@ public final class FuncType: BareType {
 
   public override func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
     // swiftlint:disable force_cast
-    return FuncType(
+    return context.funcType(
       params: params.map({ $0.substituting(substitutions) }),
       output: output.substituting(substitutions)) as! Self
     // swiftlint:enable force_cast

@@ -9,15 +9,22 @@ import Basic
 /// is stored there.
 public final class BundledType: BareType {
 
-  /// Creates a new bundled type.
-  ///
-  /// - Parameters:
-  ///   - base: A type. `base` should not be a bundled type.
-  ///   - assumptions: A set of assumptions.
-  public init(base: BareType, assumptions: TypingContext) {
+  init(context: ASTContext, base: BareType, assumptions: TypingContext) {
     precondition(!(base is BundledType))
     self.base = base
     self.assumptions = assumptions
+    super.init(context: context)
+  }
+
+  override var bytes: [UInt8] {
+    var bs: [UInt8] = []
+    withUnsafeBytes(of: BundledType.self, { bs.append(contentsOf: $0) })
+    withUnsafeBytes(of: base, { bs.append(contentsOf: $0) })
+    for symbol in assumptions.keys.sorted() {
+      withUnsafeBytes(of: symbol.id, { bs.append(contentsOf: $0) })
+      withUnsafeBytes(of: assumptions[symbol]!, { bs.append(contentsOf: $0) })
+    }
+    return bs
   }
 
   /// A type.
@@ -33,7 +40,7 @@ public final class BundledType: BareType {
       }))
 
     // swiftlint:disable force_cast
-    return BundledType(
+    return context.bundledType(
       base: base.substituting(substitutions),
       assumptions: newAssumptions) as! Self
     // swiftlint:enable force_cast

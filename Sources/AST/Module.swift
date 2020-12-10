@@ -1,3 +1,5 @@
+import Basic
+
 /// A collection of top-level declarations (i.e., types and function).
 ///
 /// A module (a.k.a. compilation unit) is an abstraction over one or several source files (a.k.a.
@@ -13,8 +15,14 @@ public class Module: Identifiable {
   ///   - id: The module's identifier.
   ///   - typeDecls: The type declaratiosn of the module.
   ///   - funcDecls: The function declarations of the module.
-  public init(id: ID, typeDecls: [NominalTypeDecl] = [], funcDecls: [FuncDecl] = []) {
+  public init(
+    id: ID,
+    context: ASTContext,
+    typeDecls: [String: NominalTypeDecl] = [:],
+    funcDecls: [String: FuncDecl] = [:]
+  ) {
     self.id = id
+    self.context = context
     self.typeDecls = typeDecls
     self.funcDecls = funcDecls
   }
@@ -22,14 +30,44 @@ public class Module: Identifiable {
   /// The module's ID.
   public final let id: ID
 
+  /// The AST context owning the module.
+  public unowned let context: ASTContext
+
   /// The type declarations of the module.
-  public final var typeDecls: [NominalTypeDecl] {
-    didSet { stateGoals.removeAll() }
+  public private(set) var typeDecls: [String: NominalTypeDecl]
+
+  /// Merges the given type declarations into the module.
+  ///
+  /// - Parameter newDecls: A sequence of declarations. Every declaration with duplicate name is
+  ///   silently skipped.
+  public func merge<S>(typeDecls newDecls: S) where S: Sequence, S.Element: NominalTypeDecl {
+    for decl in newDecls {
+      guard funcDecls[decl.name] == nil else { continue }
+      typeDecls[decl.name] = decl
+    }
   }
 
   /// The function declarations of the module.
-  public final var funcDecls: [FuncDecl] {
-    didSet { stateGoals.removeAll() }
+  public private(set) var funcDecls: [String: FuncDecl]
+
+  /// Merges the given function declarations into the module.
+  ///
+  /// - Parameter newDecls: A sequence of declarations. Every declaration with duplicate name is
+  ///   silently skipped.
+  public func merge<S>(funcDecls newDecls: S) where S: Sequence, S.Element == FuncDecl {
+    for decl in newDecls {
+      guard funcDecls[decl.name] == nil else { continue }
+      funcDecls[decl.name] = decl
+    }
+
+    stateGoals.removeAll()
+  }
+
+  /// All top-level declarations in the module.
+  public var allDecls: AnySequence<NamedDecl> {
+    let tit = typeDecls.values.makeIterator().map({ $0 as NamedDecl })
+    let fit = funcDecls.values.makeIterator().map({ $0 as NamedDecl })
+    return AnySequence({ tit.concatenated(with: fit) })
   }
 
   /// Indicates compilation state of the module.
@@ -58,15 +96,18 @@ extension Module: DeclContext {
   public final var parent: DeclContext? { nil }
 
   public final func decls(named name: String) -> AnySequence<NamedDecl> {
-    let types = typeDecls.filter({ $0.name == name }) as [NamedDecl]
-    let funcs = funcDecls.filter({ $0.name == name }) as [NamedDecl]
-    return AnySequence(types + funcs)
+    var results: [NamedDecl] = []
+    if let decl = typeDecls[name] {
+      results.append(decl)
+    }
+    if let decl = funcDecls[name] {
+      results.append(decl)
+    }
+    return AnySequence(results)
   }
 
   public final func firstDecl(named name: String) -> NamedDecl? {
-    return
-      typeDecls.first(where: { $0.name == name }) ??
-      funcDecls.first(where: { $0.name == name })
+    return typeDecls[name] ?? funcDecls[name]
   }
 
 }

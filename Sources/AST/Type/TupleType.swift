@@ -1,9 +1,18 @@
 /// A tuple type.
 public final class TupleType: BareType {
 
-  /// Creates a new tuple type.
-  public init<S>(members: S) where S: Sequence, S.Element == QualType {
+  init<S>(context: ASTContext, members: S) where S: Sequence, S.Element == QualType {
     self.members = Array(members)
+    super.init(context: context)
+  }
+
+  override var bytes: [UInt8] {
+    var bs: [UInt8] = []
+    withUnsafeBytes(of: TupleSign.self, { bs.append(contentsOf: $0) })
+    for member in members {
+      withUnsafeBytes(of: member, { bs.append(contentsOf: $0) })
+    }
+    return bs
   }
 
   /// The members of the tuple.
@@ -11,7 +20,7 @@ public final class TupleType: BareType {
 
   public override func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
     // swiftlint:disable:next force_cast
-    return TupleType(members: members.map({ $0.substituting(substitutions) })) as! Self
+    return context.tupleType(members: members.map({ $0.substituting(substitutions) })) as! Self
   }
 
 }

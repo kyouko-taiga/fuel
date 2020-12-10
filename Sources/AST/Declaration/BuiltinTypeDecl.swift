@@ -8,16 +8,17 @@ public final class BuiltinTypeDecl: NominalTypeDecl {
   /// - Parameter name: The name of the built-in type.
   init(type: BuiltinType) {
     self.type = type
-    type.decl = self
   }
-
-  public var name: String { (type as! BuiltinType).name }
 
   public let type: BareType?
 
-  public weak var declContext: DeclContext?
+  public var name: String { (type as! BuiltinType).name }
 
-  public let range: SourceRange? = SourceLocation.unknown ..< SourceLocation.unknown
+  public var declContext: DeclContext? {
+    return (type as! BuiltinType).context.builtin
+  }
+
+  public var range: SourceRange? { nil }
 
   public func accept<V>(_ visitor: V) where V: Visitor {
     visitor.visit(self)

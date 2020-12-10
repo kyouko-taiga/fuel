@@ -85,7 +85,7 @@ public struct QualType {
     case let junkType as JunkType:
       guard let tupleType = junkType.base as? TupleType else { fallthrough }
       members = tupleType.members.map({ member in
-        JunkType(base: member.bareType).qualified(by: member.quals)
+        bareType.context.junkType(base: member.bareType).qualified(by: member.quals)
       })
 
     default:
@@ -93,7 +93,7 @@ public struct QualType {
     }
 
     members[i] = members[i].substituting(typeAt: path.dropFirst(), with: substitute)
-    return TupleType(members: members).qualified(by: self.quals)
+    return bareType.context.tupleType(members: members).qualified(by: self.quals)
   }
 
   /// Returns the type obtained by applying the given symbol substitution table.

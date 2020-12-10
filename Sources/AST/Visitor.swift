@@ -70,7 +70,7 @@ extension Visitor {
   ///
   /// - Parameter node: The node to traverse.
   @inlinable public func traverse(_ node: Module) {
-    node.funcDecls.forEach({ $0.accept(self) })
+    node.allDecls.forEach({ $0.accept(self) })
   }
 
   /// Traverses the specified node, visiting each of its children.
@@ -117,14 +117,14 @@ extension Visitor {
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to visit.
-  public func visit(_ node: BuiltinTypeDecl) {
+  public func visit(_ node: NominalTypeDecl) {
     traverse(node)
   }
 
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to traverse.
-  @inlinable public func traverse(_ node: BuiltinTypeDecl) {
+  @inlinable public func traverse(_ node: NominalTypeDecl) {
   }
 
   /// Traverses the specified node, visiting each of its children.

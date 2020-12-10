@@ -8,13 +8,14 @@ public final class TypeRealizer: Visitor {
   /// - Parameter astContext: The AST context in which the pass is ran.
   public init(astContext: ASTContext) {
     self.astContext = astContext
+    self.errorType = astContext.errorType.qualified()
   }
 
   /// The AST context in which the pass is ran.
   private let astContext: ASTContext
 
   /// An error type.
-  private let errorType = QualType(bareType: ErrorType.get)
+  private let errorType: QualType
 
   /// A flag that is set when the pass raised an error.
   private var hasErrors = false
@@ -72,7 +73,7 @@ public final class TypeRealizer: Visitor {
 
     guard let base = node.base.type else { return }
     node.type = QualType(
-      bareType: UniversalType(
+      bareType: astContext.universalType(
         base: base.bareType,
         params: node.params.map({ $0.name })))
   }
@@ -82,14 +83,14 @@ public final class TypeRealizer: Visitor {
 
     let params = node.params.map({ $0.type ?? errorType })
     let output = node.output.type ?? errorType
-    node.type = QualType(bareType: FuncType(params: params, output: output))
+    node.type = QualType(bareType: astContext.funcType(params: params, output: output))
   }
 
   public func visit(_ node: LocationSign) {
     traverse(node)
 
     if let decl = node.location.referredDecl {
-      node.type = QualType(bareType: LocationType(location: Symbol(decl: decl)))
+      node.type = QualType(bareType: astContext.locationType(location: Symbol(decl: decl)))
     }
   }
 
@@ -125,7 +126,8 @@ public final class TypeRealizer: Visitor {
     }
 
     // Build the extended type.
-    node.type = QualType(bareType: BundledType(base: base.bareType, assumptions: assumptions))
+    node.type = QualType(
+      bareType: astContext.bundledType(base: base.bareType, assumptions: assumptions))
   }
 
   public func visit(_ node: TupleSign) {
@@ -133,7 +135,8 @@ public final class TypeRealizer: Visitor {
     traverse(node)
 
     // Build the tuple type.
-    node.type = QualType(bareType: TupleType(members: node.members.map({ $0.type ?? errorType })))
+    node.type = QualType(
+      bareType: astContext.tupleType(members: node.members.map({ $0.type ?? errorType })))
   }
 
   public func visit(_ node: IdentSign) {

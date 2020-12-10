@@ -1,13 +1,12 @@
+import Basic
+
 /// A built-in type.
 public final class BuiltinType: BareType {
 
-  /// Creates a new built-in type.
-  init(name: String) {
+  init(context: ASTContext, name: String) {
     self.name = name
+    super.init(context: context)
   }
-
-  /// The type's declaration.
-  public internal(set) weak var decl: BuiltinTypeDecl?
 
   /// The type's name.
   public let name: String
