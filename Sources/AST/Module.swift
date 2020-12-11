@@ -34,7 +34,7 @@ public class Module: Identifiable {
   public unowned let context: ASTContext
 
   /// The type declarations of the module.
-  public private(set) var typeDecls: [String: NominalTypeDecl]
+  public internal(set) var typeDecls: [String: NominalTypeDecl]
 
   /// Merges the given type declarations into the module.
   ///
@@ -48,7 +48,7 @@ public class Module: Identifiable {
   }
 
   /// The function declarations of the module.
-  public private(set) var funcDecls: [String: FuncDecl]
+  public internal(set) var funcDecls: [String: FuncDecl]
 
   /// Merges the given function declarations into the module.
   ///

@@ -8,23 +8,25 @@ public final class BuiltinModule: Module {
     int32 = BuiltinType(context: context, name: "Int32")
     int64 = BuiltinType(context: context, name: "Int64")
 
-    super.init(id: "_Builtin", context: context, typeDecls: [
+    // Initialize the built-in module.
+    super.init(id: "_Builtin", context: context)
+
+    // Create the built-in type declarations.
+    typeDecls = [
       "Any"   : BuiltinTypeDecl(type: any),
       "Void"  : BuiltinTypeDecl(type: void),
       "Bool"  : BuiltinTypeDecl(type: bool),
       "Int32" : BuiltinTypeDecl(type: int32),
       "Int64" : BuiltinTypeDecl(type: int64),
-    ])
+    ]
 
-    // Create the built-in functions.
-    var builtinFuncDecls: [FuncDecl] = []
-
+    // Create the built-in function declarations.
     for type in integers {
       let decl = binaryOperation(
         "add_\(type.name)",
         typeDecls[type.name] as! BuiltinTypeDecl)
       decl.declContext = self
-      builtinFuncDecls.append(decl)
+      funcDecls[decl.name] = decl
     }
 
     // Mark the module as type-checked.
