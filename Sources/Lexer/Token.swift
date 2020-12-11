@@ -62,7 +62,9 @@ public struct Token {
 
     case call
 
-    case addr
+    case insert
+
+    case extract
 
     case free
 

@@ -60,8 +60,10 @@ public struct Lexer: IteratorProtocol, Sequence, StreamProcessor {
         return Token(kind: .halloc  , value: value, source: source)
       case "call":
         return Token(kind: .call    , value: value, source: source)
-      case "addr":
-        return Token(kind: .addr    , value: value, source: source)
+      case "insert":
+        return Token(kind: .insert  , value: value, source: source)
+      case "extract":
+        return Token(kind: .extract , value: value, source: source)
       case "free":
         return Token(kind: .free    , value: value, source: source)
       case "store":
