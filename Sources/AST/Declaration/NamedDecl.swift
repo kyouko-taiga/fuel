@@ -9,6 +9,9 @@ public protocol NamedDecl: AnyObject {
   /// The symbol uniquely identifying this declaration.
   var symbol: Symbol { get }
 
+  /// Returns whether the declaration is built-in.
+  var isBuiltin: Bool { get }
+
   /// The context in which the entity is being declared.
   var declContext: DeclContext? { get }
 
@@ -23,5 +26,7 @@ public protocol NamedDecl: AnyObject {
 extension NamedDecl {
 
   public var symbol: Symbol { Symbol(decl: self) }
+
+  public var isBuiltin: Bool { declContext is BuiltinModule }
 
 }
