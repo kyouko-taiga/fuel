@@ -3,6 +3,7 @@ import Foundation
 import AST
 import Basic
 import Lexer
+import LLVMCodeGen
 import Parser
 import Sema
 
@@ -53,6 +54,9 @@ public final class Driver {
 
     case .runSema:
       runSema()
+
+    case .emitLLVM:
+      emitLLVM()
     }
   }
 
@@ -75,6 +79,14 @@ public final class Driver {
     p1.visit(module)
     let p2 = TypeChecker(astContext: astContext)
     p2.visit(module)
+  }
+
+  public func emitLLVM() {
+    guard module.stateGoals.contains(.typeChecked) else { return }
+
+    var generator = LLVMCodeGen.CodeGenerator(module: module)
+    let m = generator.emit()
+    m.dump()
   }
 
 }

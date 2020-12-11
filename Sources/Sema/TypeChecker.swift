@@ -98,19 +98,9 @@ public final class TypeChecker: Visitor {
     // Skip the declaration if it's just a prologue.
     guard let body = node.body else { return }
 
-    // The unqualified, canonical form of `declType` must be a function type or a universally
-    // quantified function type. In the latter case, we can remove the universal quantier and
-    // "instanciate" the function type.
-    let declType: FuncType
-    switch node.type?.bareType {
-    case let ft as FuncType:
-      declType = ft
-
-    case let ut as UniversalType:
-      guard let ft = ut.base as? FuncType else { return }
-      declType = ft
-
-    default:
+    // If the declaration has a universal type, then we can simply remove the quantifier to
+    // "instanciate" each quantified parameter.
+    guard let declType = node.bareFuncType else {
       // Skip the declaration if it doesn't have a valid function type. This can be done silently,
       // as it should only happen when the type realizer was not able to evaluate an appropriate
       // type, which would have resulted in a diagnostic.

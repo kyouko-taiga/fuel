@@ -32,6 +32,23 @@ public final class FuncDecl: NamedDecl, DeclContext {
   /// The function's semantic type.
   public var type: QualType?
 
+  /// The function's type, unwrapped.
+  ///
+  /// The type of a function is a `FuncType`, or a `UniversalType` whose base type is a `FuncType`.
+  /// This property extract the underlying `FuncType`.
+  public var bareFuncType: FuncType? {
+    switch type?.bareType {
+    case let ty as FuncType:
+      return ty
+    case let ty as UniversalType:
+      return ty.base as? FuncType
+    case nil:
+      return nil
+    default:
+      fatalError("unreachable")
+    }
+  }
+
   public var parent: DeclContext?
 
   public var declContext: DeclContext?
