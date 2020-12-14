@@ -22,11 +22,17 @@ public final class BuiltinModule: Module {
 
     // Create the built-in function declarations.
     for type in integers {
-      let decl = binaryOperation(
-        "add_\(type.name)",
-        typeDecls[type.name] as! BuiltinTypeDecl)
-      decl.declContext = self
-      funcDecls[decl.name] = decl
+      let intDecl = typeDecls[type.name] as! BuiltinTypeDecl
+
+      for binary in ["add_", "sub_", "mul_", "div_"] {
+        let funcDecl = binaryOperation(binary + (type.name), intDecl)
+        funcDecls[funcDecl.name] = funcDecl
+      }
+
+      for predicate in ["eq_", "ne_", "gt_", "ge_", "lt_", "le_"] {
+        let funcDecl = predicateOperation(predicate + (type.name), intDecl)
+        funcDecls[funcDecl.name] = funcDecl
+      }
     }
 
     // Mark the module as type-checked.
@@ -53,11 +59,19 @@ public final class BuiltinModule: Module {
     return [int32, int64]
   }
 
-  /// Creates a binary operation.
+  /// Creates the declaration of a binary operation.
   ///
   /// Binary operations have type `(T, T) -> T`.
   private func binaryOperation(_ name: String, _ typeDecl: BuiltinTypeDecl) -> FuncDecl {
     return function(name, [typeDecl, typeDecl], typeDecl)
+  }
+
+  /// Creates the declaration of a predicate operation.
+  ///
+  /// Predicate operations have type `(T, T) -> Bool`.
+  private func predicateOperation(_ name: String, _ typeDecl: BuiltinTypeDecl) -> FuncDecl {
+    let boolDecl = typeDecls["Bool"] as! BuiltinTypeDecl
+    return function(name, [typeDecl, typeDecl], boolDecl)
   }
 
   /// Creates a built-in function.
@@ -92,6 +106,7 @@ public final class BuiltinModule: Module {
       param.declContext = decl
     }
 
+    decl.declContext = self
     return decl
   }
 
