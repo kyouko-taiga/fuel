@@ -77,10 +77,10 @@ extension Symbol: Comparable {
 extension Symbol: CustomStringConvertible {
 
   public var description: String {
-    let id = String(rawValue & ~0b11, radix: 16, uppercase: false)
     if let name = self.name {
-      return "\(name)#\(id)"
+      return name
     } else {
+      let id = String(rawValue & ~0b11, radix: 16, uppercase: false)
       return "#\(id)"
     }
   }
