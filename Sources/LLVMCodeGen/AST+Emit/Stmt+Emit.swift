@@ -1,6 +1,17 @@
 import LLVM
 import AST
 
+extension Stmt {
+
+  func emit(in cgContext: inout CodeGenContext) -> IRValue {
+    guard let emittable = self as? ValueEmittable else {
+      fatalError("value is not emittable")
+    }
+    return emittable.emit(in: &cgContext)
+  }
+
+}
+
 extension CallStmt: ValueEmittable {
 
   func emit(in cgContext: inout CodeGenContext) -> IRValue {
@@ -63,20 +74,71 @@ extension CallStmt: ValueEmittable {
   }
 
   func emitBuiltinCall(to funcDecl: FuncDecl, in cgContext: inout CodeGenContext) -> IRValue {
+    let builder = cgContext.builder
     let llvmArgs = args.map({ $0.emit(in: &cgContext) })
     let inst: IRValue
 
     let components = funcDecl.name.split(separator: "_", maxSplits: 1)
     switch components.first {
     case "add":
-      precondition(llvmArgs.count == 2)
-      inst = cgContext.builder.buildAdd(llvmArgs[0], llvmArgs[1])
+      inst = builder.buildAdd(llvmArgs[0], llvmArgs[1])
+    case "sub":
+      inst = builder.buildSub(llvmArgs[0], llvmArgs[1])
+    case "mul":
+      inst = builder.buildMul(llvmArgs[0], llvmArgs[1])
+    case "div":
+      inst = builder.buildDiv(llvmArgs[0], llvmArgs[1])
+    case "eq" where components[1].starts(with: "Int"):
+      inst = builder.buildICmp(llvmArgs[0], llvmArgs[1], .equal)
+    case "ne" where components[1].starts(with: "Int"):
+      inst = builder.buildICmp(llvmArgs[0], llvmArgs[1], .notEqual)
+    case "ge" where components[1].starts(with: "Int"):
+      inst = builder.buildICmp(llvmArgs[0], llvmArgs[1], .signedGreaterThanOrEqual)
+    case "gt" where components[1].starts(with: "Int"):
+      inst = builder.buildICmp(llvmArgs[0], llvmArgs[1], .signedGreaterThan)
+    case "le" where components[1].starts(with: "Int"):
+      inst = builder.buildICmp(llvmArgs[0], llvmArgs[1], .signedLessThanOrEqual)
+    case "lt" where components[1].starts(with: "Int"):
+      inst = builder.buildICmp(llvmArgs[0], llvmArgs[1], .signedLessThan)
 
     default:
       fatalError("unreachable")
     }
 
     cgContext.environment[symbol] = inst
+    return inst
+  }
+
+}
+
+extension IfStmt: ValueEmittable {
+
+  func emit(in cgContext: inout CodeGenContext) -> IRValue {
+    // Create basic blocks for each branch.
+    let llvmFunc = cgContext.builder.currentFunction!
+    let thenBB = llvmFunc.appendBasicBlock(named: "then", in: cgContext.llvmContext)
+    let elseBB = llvmFunc.appendBasicBlock(named: "else", in: cgContext.llvmContext)
+    let joinBB = llvmFunc.appendBasicBlock(named: "join", in: cgContext.llvmContext)
+
+    // Emit a branch statement.
+    let condVal = cond.emit(in: &cgContext)
+    let inst = cgContext.builder.buildCondBr(condition: condVal, then: thenBB, else: elseBB)
+
+    // Emit the contents of each branch.
+    cgContext.builder.positionAtEnd(of: thenBB)
+    for stmt in thenBody.stmts {
+      _ = stmt.emit(in: &cgContext)
+    }
+    cgContext.builder.buildBr(joinBB)
+
+    cgContext.builder.positionAtEnd(of: elseBB)
+    for stmt in elseBody?.stmts ?? [] {
+      _ = stmt.emit(in: &cgContext)
+    }
+    cgContext.builder.buildBr(joinBB)
+
+    // Position the builder in the join block.
+    cgContext.builder.positionAtEnd(of: joinBB)
     return inst
   }
 
