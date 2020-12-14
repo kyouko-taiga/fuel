@@ -17,6 +17,8 @@ public final class LocDecl: NamedDecl {
     visitor.visit(self)
   }
 
+  public var symbol: Symbol { Symbol(decl: self, isLocRef: true) }
+
 }
 
 extension LocDecl: CustomStringConvertible {
