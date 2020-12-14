@@ -9,6 +9,8 @@ public protocol Visitor {
 
   func visit(_ node: QuantifiedParamDecl)
 
+  func visit(_ node: LocDecl)
+
   func visit(_ node: BraceStmt)
 
   func visit(_ node: ScopeAllocStmt)
@@ -112,6 +114,19 @@ extension Visitor {
   ///
   /// - Parameter node: The node to traverse.
   @inlinable public func traverse(_ node: QuantifiedParamDecl) {
+  }
+
+  /// Traverses the specified node, visiting each of its children.
+  ///
+  /// - Parameter node: The node to visit.
+  public func visit(_ node: LocDecl) {
+    traverse(node)
+  }
+
+  /// Traverses the specified node, visiting each of its children.
+  ///
+  /// - Parameter node: The node to traverse.
+  @inlinable public func traverse(_ node: LocDecl) {
   }
 
   /// Traverses the specified node, visiting each of its children.

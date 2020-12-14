@@ -2,14 +2,18 @@ import Basic
 
 public final class ScopeAllocStmt: Stmt, NamedDecl {
 
-  public init(name: String, sign: TypeSign) {
+  public init(name: String, sign: TypeSign, loc: LocDecl? = nil) {
     self.name = name
     self.sign = sign
+    self.loc = loc
   }
 
   public var name: String
 
   public var sign: TypeSign
+
+  /// The location of the cell allocated by this statement.
+  public var loc: LocDecl?
 
   public var declContext: DeclContext?
 
@@ -24,7 +28,11 @@ public final class ScopeAllocStmt: Stmt, NamedDecl {
 extension ScopeAllocStmt: CustomStringConvertible {
 
   public var description: String {
-    return "\(name) = salloc \(sign)"
+    if let loc = self.loc {
+      return "\(name) = salloc \(sign) at \(loc.name)"
+    } else {
+      return "\(name) = salloc \(sign)"
+    }
   }
 
 }

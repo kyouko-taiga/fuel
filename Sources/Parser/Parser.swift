@@ -184,8 +184,22 @@ public struct Parser: StreamProcessor {
       take(.salloc)
 
       let sign = try parseTypeSign()
-      let stmt = ScopeAllocStmt(name: String(name.value), sign: sign)
-      stmt.range = name.range.lowerBound ..< sign.range!.upperBound
+      var upperBound = sign.range!.upperBound
+
+      let loc: LocDecl?
+      if take(.at) != nil {
+        guard let tok = take(.name) else {
+          throw ParseError(message: "expected location identifier", range: peek()?.range)
+        }
+        loc = LocDecl(name: String(tok.value))
+        loc!.range = tok.range
+        upperBound = tok.range.upperBound
+      } else {
+        loc = nil
+      }
+
+      let stmt = ScopeAllocStmt(name: String(name.value), sign: sign, loc: loc)
+      stmt.range = name.range.lowerBound ..< upperBound
       return stmt
 
     case .load:
