@@ -5,14 +5,15 @@ public final class BraceStmt: Stmt, DeclContext {
 
   public init(stmts: [Stmt]) {
     self.stmts = stmts
+    computeDeclCache()
   }
 
   /// The statements in the block.
-  public var stmts: [Stmt]
+  public var stmts: [Stmt] {
+    didSet { computeDeclCache() }
+  }
 
   public weak var parent: DeclContext?
-
-  public var decls: [NamedDecl] { stmts.compactMap({ $0 as? NamedDecl }) }
 
   /// The block's range in the source.
   public var range: SourceRange?
@@ -22,20 +23,26 @@ public final class BraceStmt: Stmt, DeclContext {
   }
 
   public func decls(named name: String) -> AnySequence<NamedDecl> {
-    return AnySequence(stmts.compactMap({ (stmt: Stmt) -> NamedDecl? in
-      if let decl = stmt as? NamedDecl, decl.name == name {
-        return decl
-      } else {
-        return nil
-      }
-    }))
+    return AnySequence(declCache[name, default: []])
   }
 
   public func firstDecl(named name: String) -> NamedDecl? {
-    for case let decl as NamedDecl in stmts where decl.name == name {
-      return decl
+    return declCache[name]?.first
+  }
+
+  /// A cache with the named declarations in this context.
+  private var declCache: [String: [NamedDecl]] = [:]
+
+  /// (Re)computes the declaration cache.
+  private func computeDeclCache() {
+    for case let decl as NamedDecl in stmts {
+      declCache[decl.name, default: []].append(decl)
+
+      // Look for additional declarations in the statement.
+      if let loc = (decl as? ScopeAllocStmt)?.loc {
+        declCache[loc.name, default: []].append(loc)
+      }
     }
-    return nil
   }
 
 }
