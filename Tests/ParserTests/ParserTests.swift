@@ -76,10 +76,18 @@ class ParserTests: XCTestCase, ParserTestCase {
     let _: ReturnStmt? = parse("return 1337", with: { try $0.parseStmt() })
   }
 
-  func testParseScopeAllocStmt() {
+  func testParseScopeAllocStmt() throws {
     if let stmt: ScopeAllocStmt = parse("foo = salloc T", with: { try $0.parseStmt() }) {
       XCTAssertEqual(stmt.name, "foo")
       XCTAssert(stmt.sign is IdentSign)
+      XCTAssertNil(stmt.loc)
+    }
+
+    if let stmt: ScopeAllocStmt = parse("foo = salloc T at a", with: { try $0.parseStmt() }) {
+      XCTAssertEqual(stmt.name, "foo")
+      XCTAssert(stmt.sign is IdentSign)
+      let loc = try XCTUnwrap(stmt.loc)
+      XCTAssertEqual(loc.name, "a")
     }
   }
 
