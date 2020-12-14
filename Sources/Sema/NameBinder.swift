@@ -64,6 +64,12 @@ public final class NameBinder: Visitor {
     traverse(node)
   }
 
+  public func visit(_ node: LocDecl) {
+    node.declContext = declContext
+    checkDuplicateDecl(node)
+    traverse(node)
+  }
+
   public func visit(_ node: ScopeAllocStmt) {
     node.declContext = declContext
     checkDuplicateDecl(node)
