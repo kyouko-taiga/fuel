@@ -25,8 +25,8 @@ public protocol NamedDecl: AnyObject {
 
 extension NamedDecl {
 
-  public var symbol: Symbol { Symbol(decl: self) }
+  @inlinable public var symbol: Symbol { Symbol(decl: self) }
 
-  public var isBuiltin: Bool { declContext is BuiltinModule }
+  @inlinable public var isBuiltin: Bool { declContext is BuiltinModule }
 
 }

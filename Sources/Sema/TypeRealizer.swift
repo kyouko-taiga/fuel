@@ -90,7 +90,7 @@ public final class TypeRealizer: Visitor {
     traverse(node)
 
     if let decl = node.location.referredDecl {
-      node.type = QualType(bareType: astContext.locationType(location: Symbol(decl: decl)))
+      node.type = QualType(bareType: astContext.locationType(location: decl.symbol))
     }
   }
 
@@ -111,8 +111,8 @@ public final class TypeRealizer: Visitor {
       }
 
       // Check that the assumption is not inconsistent with the ones already realized.
-      let symbol = Symbol(decl: decl)
-      guard assumptions[symbol] == nil else {
+      let sym = decl.symbol
+      guard assumptions[sym] == nil else {
         hasErrors = true
         astContext.report(message: "inconsistent assumption")
           .set(location: assumption.range?.lowerBound)
@@ -122,7 +122,7 @@ public final class TypeRealizer: Visitor {
 
       // Notice that assumptions with unrealized signatures are given an error type, so that they
       // can still appear in the context.
-      assumptions[symbol] = assumption.sign.type ?? errorType
+      assumptions[sym] = assumption.sign.type ?? errorType
     }
 
     // Build the extended type.
