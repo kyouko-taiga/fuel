@@ -7,3 +7,6 @@
 /Packages
 /Package.resolved
 /*.xcodeproj
+
+# Project specific
+/Playground
