@@ -21,7 +21,7 @@ public final class BundledType: BareType {
     withUnsafeBytes(of: BundledType.self, { bs.append(contentsOf: $0) })
     withUnsafeBytes(of: base, { bs.append(contentsOf: $0) })
     for symbol in assumptions.keys.sorted() {
-      withUnsafeBytes(of: symbol.id, { bs.append(contentsOf: $0) })
+      withUnsafeBytes(of: symbol.rawValue, { bs.append(contentsOf: $0) })
       withUnsafeBytes(of: assumptions[symbol]!, { bs.append(contentsOf: $0) })
     }
     return bs

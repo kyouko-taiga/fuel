@@ -210,7 +210,7 @@ public final class TypeChecker: Visitor {
     }
 
     // Consume the assumptions required by the function.
-    for assumption in assumptions where assumption.key.isReferringToLocation {
+    for assumption in assumptions where assumption.key.isLocRef {
       assert(typingContext[assumption.key]! <= assumption.value)
       typingContext[assumption.key] = nil
     }
@@ -338,10 +338,16 @@ public final class TypeChecker: Visitor {
       return
     }
 
-    // Allocate a new location and create a capacity for it.
-    let a = alloc()
-    typingContext[Symbol(decl: node)] = astContext.locationType(location: a).qualified()
-    typingContext[a] = astContext.junkType(base: storageType.bareType).qualified(by: storageType.quals)
+    // Create a new location symbol.
+    let sym = node.loc?.symbol ?? nextSymbol(isLocRef: true)
+
+    // Allocate a new cell and create a capacity for it.
+    typingContext[Symbol(decl: node)] = astContext
+      .locationType(location: sym)
+      .qualified()
+    typingContext[sym] = astContext
+      .junkType(base: storageType.bareType)
+      .qualified(by: storageType.quals)
   }
 
   public func typeCheck(_ node: StoreStmt) throws {
@@ -373,11 +379,11 @@ public final class TypeChecker: Visitor {
 
   // MARK: Helper functions
 
-  private var nextLocationID = 0
+  private var nextSymbolID = 0
 
-  private func alloc() -> Symbol {
-    let symbol = Symbol(id: nextLocationID, isReferringToLocation: true)
-    nextLocationID += 1
+  private func nextSymbol(isLocRef: Bool) -> Symbol {
+    let symbol = Symbol(id: nextSymbolID, isLocRef: isLocRef)
+    nextSymbolID += 1
     return symbol
   }
 
