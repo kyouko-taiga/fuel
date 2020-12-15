@@ -93,7 +93,7 @@ public final class TypeRealizer: Visitor {
     traverse(node)
 
     if let decl = node.location.referredDecl {
-      node.type = QualType(bareType: astContext.locationType(location: decl.symbol))
+      node.type = QualType(bareType: astContext.locType(location: decl.symbol))
     }
   }
 

@@ -1,7 +1,7 @@
 /// The type of a single memory location.
 ///
 /// Formally, a location type is a singleton type whose inhabitant designates a memory location.
-public final class LocationType: BareType {
+public final class LocType: BareType {
 
   init(context: ASTContext, location: Symbol) {
     self.location = location
@@ -21,12 +21,12 @@ public final class LocationType: BareType {
 
   public override func substituting(_ substitutions: [Symbol: Symbol]) -> Self {
     // swiftlint:disable force_cast
-    return context.locationType(location: substitutions[location] ?? location) as! Self
+    return context.locType(location: substitutions[location] ?? location) as! Self
   }
 
 }
 
-extension LocationType: CustomStringConvertible {
+extension LocType: CustomStringConvertible {
 
   public var description: String {
     return "!\(location)"

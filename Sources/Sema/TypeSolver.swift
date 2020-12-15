@@ -108,8 +108,8 @@ struct TypeSolver {
     }
 
     // Try to instantiate rhs with lhs when both denote different location types.
-    if let a = lhs.bareType as? LocationType,
-       let b = rhs.bareType as? LocationType,
+    if let a = lhs.bareType as? LocType,
+       let b = rhs.bareType as? LocType,
        quantifiedParams.contains(b.location.name ?? "")
     {
       assert(!substitutions.keys.contains(b.location))

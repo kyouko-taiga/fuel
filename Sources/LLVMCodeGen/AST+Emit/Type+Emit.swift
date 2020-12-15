@@ -47,11 +47,11 @@ extension BareType: TypeEmittable {
     case context.builtin.int32 : return cgContext.llvmInt32
     case context.builtin.int64 : return cgContext.llvmInt64
 
-    case is LocationType:
+    case is LocType:
       return cgContext.llvmAny
 
     case let ty as BundledType:
-      if let locTy = ty.base as? LocationType,
+      if let locTy = ty.base as? LocType,
          let pointeeTy = ty.assumptions[locTy.location]
       {
         return PointerType(pointee: pointeeTy.emit(in: &cgContext))

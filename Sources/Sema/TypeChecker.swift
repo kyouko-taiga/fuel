@@ -157,7 +157,7 @@ public final class TypeChecker: Visitor {
     for decl in namedDecls {
       let sym = decl.symbol
       if decl is ScopeAllocStmt {
-        if let loc = (typingContext[sym]?.bareType as? LocationType)?.location {
+        if let loc = (typingContext[sym]?.bareType as? LocType)?.location {
           typingContext[loc] = nil
         }
       }
@@ -263,7 +263,7 @@ public final class TypeChecker: Visitor {
     // Determine the type of the l-value.
     let (baseExpr, path) = node.lvalue.storageRef
     let lvBaseType = try type(of: baseExpr)
-    guard let loc = (lvBaseType.bareType as? LocationType)?.location else {
+    guard let loc = (lvBaseType.bareType as? LocType)?.location else {
       throw TypeError.invalidLValue(expr: baseExpr)
     }
 
@@ -341,7 +341,7 @@ public final class TypeChecker: Visitor {
 
     // Allocate a new cell and create a capacity for it.
     typingContext[node.symbol] = astContext
-      .locationType(location: sym)
+      .locType(location: sym)
       .qualified()
     typingContext[sym] = astContext
       .junkType(base: storageType.bareType)
@@ -355,7 +355,7 @@ public final class TypeChecker: Visitor {
     // Determine the type of the l-value.
     let (baseExpr, path) = node.lvalue.storageRef
     let lvBaseType = try type(of: baseExpr)
-    guard let loc = (lvBaseType.bareType as? LocationType)?.location else {
+    guard let loc = (lvBaseType.bareType as? LocType)?.location else {
       throw TypeError.invalidLValue(expr: baseExpr)
     }
 

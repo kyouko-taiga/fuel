@@ -73,8 +73,8 @@ public final class ASTContext {
   /// Creates a location type.
   ///
   /// - Parameter location: The name of a memory location.
-  public func locationType(location: Symbol) -> LocationType {
-    let ty = LocationType(context: self, location: location)
+  public func locType(location: Symbol) -> LocType {
+    let ty = LocType(context: self, location: location)
     return insert(type: ty)
   }
 
