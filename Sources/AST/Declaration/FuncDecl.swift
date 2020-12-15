@@ -34,13 +34,13 @@ public final class FuncDecl: NamedDecl, DeclContext {
 
   /// The function's type, unwrapped.
   ///
-  /// The type of a function is a `FuncType`, or a `UniversalType` whose base type is a `FuncType`.
-  /// This property extract the underlying `FuncType`.
+  /// A well-typed function declaration has either a function type, or a function type wrapped
+  /// within a universally quantified type.
   public var bareFuncType: FuncType? {
     switch type?.bareType {
     case let ty as FuncType:
       return ty
-    case let ty as UniversalType:
+    case let ty as QuantifiedType:
       return ty.base as? FuncType
     case nil:
       return nil

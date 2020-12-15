@@ -86,13 +86,18 @@ public final class ASTContext {
     return insert(type: ty)
   }
 
-  /// Creates a new universal type.
+  /// Creates a new quantified type.
   ///
   /// - Parameters:
+  ///   - quantifier: A quantifier.
+  ///   - params: An array of quantified parameter names.
   ///   - base: A type with unbound quantified parameters.
-  ///   - params: An array of universally quantified parameter names.
-  public func universalType(base: BareType, params: [QuantifiedParam]) -> UniversalType {
-    let ty = UniversalType(context: self, base: base, params: params)
+  public func quantifiedType(
+    quantifier: Quantifier,
+    params: [QuantifiedParam],
+    base: BareType
+  ) -> QuantifiedType {
+    let ty = QuantifiedType(context: self, quantifier: quantifier, params: params, base: base)
     return insert(type: ty)
   }
 

@@ -473,7 +473,7 @@ public struct Parser: StreamProcessor {
       ? Quantifier.universal
       : Quantifier.existential
 
-    let sign = QuantifiedSign(quantifier: quantifier, base: base, params: params)
+    let sign = QuantifiedSign(quantifier: quantifier, params: params, base: base)
     sign.range = lead.range.lowerBound ..< base.range!.upperBound
     return sign
   }

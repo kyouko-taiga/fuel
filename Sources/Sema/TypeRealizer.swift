@@ -34,33 +34,33 @@ public final class TypeRealizer: Visitor {
   public func visit(_ node: FuncDecl) {
     node.sign.accept(self)
 
-    let funcType: FuncType?
+    let funcTy: FuncType?
     switch node.sign.type?.bareType {
-    case let ft as FuncType:
-      funcType = ft
+    case let ty as FuncType:
+      funcTy = ty
 
-    case let ut as UniversalType where ut.base is FuncType:
+    case let ty as QuantifiedType where (ty.quantifier == .universal) && (ty.base is FuncType):
       // swiftlint:disable:next force_cast
-      funcType = (ut.base as! FuncType)
+      funcTy = (ty.base as! FuncType)
 
     default:
-      funcType = nil
+      funcTy = nil
       hasErrors = true
       astContext.report(message: "'\(node.sign)' is not a function type")
         .set(location: node.sign.range?.lowerBound)
         .add(range: node.sign.range)
     }
 
-    if funcType != nil {
+    if funcTy != nil {
       node.type = node.sign.type
-      if node.params.count != funcType!.params.count {
+      if node.params.count != funcTy!.params.count {
         hasErrors = true
         astContext.report(message: "incompatible function signature")
           .set(location: node.sign.range?.lowerBound)
           .add(range: node.sign.range)
       }
 
-      for (paramDecl, paramType) in zip(node.params, funcType!.params) {
+      for (paramDecl, paramType) in zip(node.params, funcTy!.params) {
         paramDecl.type = paramType
       }
     }
@@ -74,14 +74,11 @@ public final class TypeRealizer: Visitor {
     guard let base = node.base.type else { return }
     assert(base.quals.isEmpty)
 
-    let params = node.params.map({ $0.name })
-
-    switch node.quantifier {
-    case .universal:
-      node.type = QualType(bareType: astContext.universalType(base: base.bareType, params: params))
-    case .existential:
-      fatalError()
-    }
+    node.type = QualType(
+      bareType: astContext.quantifiedType(
+        quantifier: node.quantifier,
+        params: node.params.map({ $0.name }),
+        base: base.bareType))
   }
 
   public func visit(_ node: FuncSign) {

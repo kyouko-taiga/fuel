@@ -3,7 +3,7 @@ import Basic
 /// A quantified type signature.
 public final class QuantifiedSign: TypeSign, DeclContext {
 
-  public init(quantifier: Quantifier, base: TypeSign, params: [QuantifiedParamDecl]) {
+  public init(quantifier: Quantifier, params: [QuantifiedParamDecl], base: TypeSign) {
     self.quantifier = quantifier
     self.base = base
     self.params = params
@@ -11,11 +11,11 @@ public final class QuantifiedSign: TypeSign, DeclContext {
 
   public var quantifier: Quantifier
 
+  public var params: [QuantifiedParamDecl]
+
   public var base: TypeSign
 
   public var type: QualType?
-
-  public var params: [QuantifiedParamDecl]
 
   public var parent: DeclContext?
 
