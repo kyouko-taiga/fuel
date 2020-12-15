@@ -47,11 +47,23 @@ extension BareType: TypeEmittable {
     case context.builtin.int32 : return cgContext.llvmInt32
     case context.builtin.int64 : return cgContext.llvmInt64
 
-    case let tupleTy as TupleType:
-      return StructType(elementTypes: tupleTy.members.map({ $0.emit(in: &cgContext) }))
+    case is LocationType:
+      return cgContext.llvmAny
 
-    case let funcTy as FuncType:
-      var llvmParamTys = funcTy.params.compactMap({ (qualTy) -> IRType? in
+    case let ty as BundledType:
+      if let locTy = ty.base as? LocationType,
+         let pointeeTy = ty.assumptions[locTy.location]
+      {
+        return PointerType(pointee: pointeeTy.emit(in: &cgContext))
+      } else {
+        return ty.base.emit(in: &cgContext)
+      }
+
+    case let ty as TupleType:
+      return StructType(elementTypes: ty.members.map({ $0.emit(in: &cgContext) }))
+
+    case let ty as FuncType:
+      var llvmParamTys = ty.params.compactMap({ (qualTy) -> IRType? in
         let llvmTy = qualTy.emit(in: &cgContext)
 
         switch qualTy.bareType.passingPolicy {
@@ -61,9 +73,9 @@ extension BareType: TypeEmittable {
         }
       })
 
-      var llvmReturnTy = funcTy.output.emit(in: &cgContext)
+      var llvmReturnTy = ty.output.emit(in: &cgContext)
 
-      switch funcTy.output.bareType.passingPolicy {
+      switch ty.output.bareType.passingPolicy {
       case .skipped:
         llvmReturnTy = cgContext.llvmVoid
 
@@ -76,6 +88,9 @@ extension BareType: TypeEmittable {
       }
 
       return FunctionType(llvmParamTys, llvmReturnTy)
+
+    case let ty as QuantifiedType:
+      return ty.base.emit(in: &cgContext)
 
     default:
       fatalError("unresolvable type '\(self)'")
