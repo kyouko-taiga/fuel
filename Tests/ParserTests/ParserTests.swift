@@ -225,12 +225,12 @@ class ParserTests: XCTestCase, ParserTestCase {
 
   func testParseBundledSign() throws {
     if let sign: BundledSign = parse("!a + [a: T]", with: { try $0.parseTypeSign() }) {
-      XCTAssert(sign.base is LocationSign)
+      XCTAssert(sign.base is LocSign)
       XCTAssertEqual(sign.assumptions.count, 1)
     }
 
     if let sign: BundledSign = parse("!a + [a: T] + [b: U]", with: { try $0.parseTypeSign() }) {
-      XCTAssert(sign.base is LocationSign)
+      XCTAssert(sign.base is LocSign)
       XCTAssertEqual(sign.assumptions.count, 2)
     }
 
@@ -339,11 +339,11 @@ class ParserTests: XCTestCase, ParserTestCase {
   }
 
   func testParseLocSign() throws {
-    if let sign: LocationSign = parse("!a", with: { try $0.parseTypeSign() }) {
+    if let sign: LocSign = parse("!a", with: { try $0.parseTypeSign() }) {
       XCTAssertEqual(sign.location.name, "a")
     }
 
-    let _: LocationSign? = parse("(!a)", with: { try $0.parseTypeSign() })
+    let _: LocSign? = parse("(!a)", with: { try $0.parseTypeSign() })
   }
 
 }

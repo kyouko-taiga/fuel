@@ -487,7 +487,7 @@ public struct Parser: StreamProcessor {
   }
 
   /// Parses a location signature.
-  public mutating func parseLocSign() throws -> LocationSign {
+  public mutating func parseLocSign() throws -> LocSign {
     guard let lead = take(.exclamation) else {
       throw ParseError(message: "expected '!'", range: peek()?.range)
     }
@@ -495,7 +495,7 @@ public struct Parser: StreamProcessor {
       throw ParseError(message: "expected location identifier folowing '!'", range: peek()?.range)
     }
 
-    let sign = LocationSign(location: ident)
+    let sign = LocSign(location: ident)
     sign.range = lead.range.lowerBound ..< ident.range!.upperBound
     return sign
   }

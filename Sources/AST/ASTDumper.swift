@@ -162,6 +162,19 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << ")"
   }
 
+  public func visit(_ node: LocSign) {
+    self << lead
+    self << "(LocSign"
+
+    if let type = node.type {
+      self << " type=\"\(type)\""
+    }
+
+    self << "\n"
+    withInc { node.location.accept(self) }
+    self << ")"
+  }
+
   public func visit(_ node: MemberExpr) {
     self << lead
     self << "(MemberExpr offset=\(node.offset)"

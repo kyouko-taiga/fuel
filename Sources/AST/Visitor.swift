@@ -41,7 +41,7 @@ public protocol Visitor {
 
   func visit(_ node: IdentSign)
 
-  func visit(_ node: LocationSign)
+  func visit(_ node: LocSign)
 
   func visit(_ node: BundledSign)
 
@@ -360,14 +360,14 @@ extension Visitor {
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to visit.
-  public func visit(_ node: LocationSign) {
+  public func visit(_ node: LocSign) {
     traverse(node)
   }
 
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to visit.
-  @inlinable public func traverse(_ node: LocationSign) {
+  @inlinable public func traverse(_ node: LocSign) {
     node.location.accept(self)
   }
 

@@ -1,7 +1,7 @@
 import Basic
 
 /// The signature of a location type.
-public final class LocationSign: TypeSign {
+public final class LocSign: TypeSign {
 
   public init(location: IdentExpr) {
     self.location = location
@@ -19,7 +19,7 @@ public final class LocationSign: TypeSign {
 
 }
 
-extension LocationSign: CustomStringConvertible {
+extension LocSign: CustomStringConvertible {
 
   public var description: String {
     return "!\(location)"

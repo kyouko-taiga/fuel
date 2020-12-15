@@ -86,7 +86,7 @@ public final class TypeRealizer: Visitor {
     node.type = QualType(bareType: astContext.funcType(params: params, output: output))
   }
 
-  public func visit(_ node: LocationSign) {
+  public func visit(_ node: LocSign) {
     traverse(node)
 
     if let decl = node.location.referredDecl {
