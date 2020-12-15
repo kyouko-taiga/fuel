@@ -22,7 +22,7 @@ extension PointerSign: CustomStringConvertible {
 
   public var description: String {
     switch base {
-    case is FuncSign, is UniversalSign:
+    case is FuncSign, is QuantifiedSign:
       return "&(\(base))"
     default:
       return "&\(base)"

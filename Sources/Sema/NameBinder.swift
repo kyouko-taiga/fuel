@@ -41,7 +41,7 @@ public final class NameBinder: Visitor {
     declContext = node.parent
   }
 
-  public func visit(_ node: UniversalSign) {
+  public func visit(_ node: QuantifiedSign) {
     node.parent = declContext
     declContext = node
     traverse(node)

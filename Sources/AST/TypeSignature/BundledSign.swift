@@ -31,7 +31,7 @@ extension BundledSign: CustomStringConvertible {
     let tail = assumptions.map(String.init(describing:)).joined(separator: " + ")
 
     switch base {
-    case is FuncSign, is UniversalSign:
+    case is FuncSign, is QuantifiedSign:
       return "(\(base)) + \(tail)"
     default:
       return "\(base) + \(tail)"

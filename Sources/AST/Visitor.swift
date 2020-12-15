@@ -29,7 +29,7 @@ public protocol Visitor {
 
   func visit(_ node: IfStmt)
 
-  func visit(_ node: UniversalSign)
+  func visit(_ node: QuantifiedSign)
 
   func visit(_ node: QualSign)
 
@@ -275,14 +275,14 @@ extension Visitor {
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to visit.
-  public func visit(_ node: UniversalSign) {
+  public func visit(_ node: QuantifiedSign) {
     traverse(node)
   }
 
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to traverse.
-  @inlinable public func traverse(_ node: UniversalSign) {
+  @inlinable public func traverse(_ node: QuantifiedSign) {
     node.params.forEach({ $0.accept(self) })
     node.base.accept(self)
   }

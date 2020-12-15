@@ -237,21 +237,37 @@ class ParserTests: XCTestCase, ParserTestCase {
     let _: BundledSign? = parse("(!a) + [a: T]", with: { try $0.parseTypeSign() })
   }
 
-  func testParseUniversalSign() throws {
+  func testParseQuantifiedSign() throws {
     // A universally quantified signature without any parameter.
-    if let sign: UniversalSign = parse(#"\A . T"#, with: { try $0.parseTypeSign() }) {
+    if let sign: QuantifiedSign = parse(#"\A . T"#, with: { try $0.parseTypeSign() }) {
+      XCTAssertEqual(sign.quantifier, .universal)
+      XCTAssertEqual(sign.params.count, 0)
+    }
+
+    // An existentiall quantified signature without any parameter.
+    if let sign: QuantifiedSign = parse(#"\E . T"#, with: { try $0.parseTypeSign() }) {
+      XCTAssertEqual(sign.quantifier, .existential)
       XCTAssertEqual(sign.params.count, 0)
     }
 
     // A universally quantified signature with a single parameter.
-    if let sign: UniversalSign = parse(#"\A a . T"#, with: { try $0.parseTypeSign() }) {
+    if let sign: QuantifiedSign = parse(#"\A a . T"#, with: { try $0.parseTypeSign() }) {
+      XCTAssertEqual(sign.quantifier, .universal)
+      XCTAssertEqual(sign.params.count, 1)
+      XCTAssertEqual(sign.params.first?.name, "a")
+    }
+
+    // An existentially quantified signature with a single parameter.
+    if let sign: QuantifiedSign = parse(#"\E a . T"#, with: { try $0.parseTypeSign() }) {
+      XCTAssertEqual(sign.quantifier, .existential)
       XCTAssertEqual(sign.params.count, 1)
       XCTAssertEqual(sign.params.first?.name, "a")
     }
 
     // A universally quantified function signature with multiple parameters.
     let input = #"\A a, b . (!a + [a: Int], !b + [b: Int]) -> Void + [a: Int] + [b: Int]"#
-    if let sign: UniversalSign = parse(input, with: { try $0.parseTypeSign() }) {
+    if let sign: QuantifiedSign = parse(input, with: { try $0.parseTypeSign() }) {
+      XCTAssertEqual(sign.quantifier, .universal)
       XCTAssertEqual(sign.params.count, 2)
       if sign.params.count == 2 {
         XCTAssertEqual(sign.params[0].name, "a")
@@ -260,8 +276,8 @@ class ParserTests: XCTestCase, ParserTestCase {
       XCTAssert(sign.base is FuncSign)
     }
 
-    let _: UniversalSign? = parse(#"\A a . (T)"#, with: { try $0.parseTypeSign() })
-    let _: UniversalSign? = parse(#"(\A a . T)"#, with: { try $0.parseTypeSign() })
+    let _: QuantifiedSign? = parse(#"\A a . (T)"#, with: { try $0.parseTypeSign() })
+    let _: QuantifiedSign? = parse(#"(\A a . T)"#, with: { try $0.parseTypeSign() })
   }
 
   func testParseFuncSign() {

@@ -68,14 +68,20 @@ public final class TypeRealizer: Visitor {
     node.body?.accept(self)
   }
 
-  public func visit(_ node: UniversalSign) {
+  public func visit(_ node: QuantifiedSign) {
     traverse(node)
 
     guard let base = node.base.type else { return }
-    node.type = QualType(
-      bareType: astContext.universalType(
-        base: base.bareType,
-        params: node.params.map({ $0.name })))
+    assert(base.quals.isEmpty)
+
+    let params = node.params.map({ $0.name })
+
+    switch node.quantifier {
+    case .universal:
+      node.type = QualType(bareType: astContext.universalType(base: base.bareType, params: params))
+    case .existential:
+      fatalError()
+    }
   }
 
   public func visit(_ node: FuncSign) {

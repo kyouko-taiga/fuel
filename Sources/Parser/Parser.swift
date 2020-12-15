@@ -397,8 +397,8 @@ public struct Parser: StreamProcessor {
         throw ParseError(message: "expected '->' separator", range: peek()?.range)
       }
 
-    case .universal:
-      base = try parseUniversalSign()
+    case .universal, .existential:
+      base = try parseQuantifiedSign()
 
     case .name:
       base = try parseIdentSign()
@@ -452,10 +452,10 @@ public struct Parser: StreamProcessor {
     return signs
   }
 
-  /// Parses an universally quantified type signature.
-  public mutating func parseUniversalSign() throws -> UniversalSign {
-    guard let lead = take(.universal) else {
-      throw ParseError(message: "expected universal quantifier", range: peek()?.range)
+  /// Parses a quantified type signature.
+  public mutating func parseQuantifiedSign() throws -> QuantifiedSign {
+    guard let lead = take(.universal) ?? take(.existential) else {
+      throw ParseError(message: "expected quantifier", range: peek()?.range)
     }
 
     let endIndex = input[index...].firstIndex(where: { $0.kind == .dot })
@@ -469,8 +469,11 @@ public struct Parser: StreamProcessor {
     }
 
     let base = try parseTypeSign()
+    let quantifier = lead.kind == .universal
+      ? Quantifier.universal
+      : Quantifier.existential
 
-    let sign = UniversalSign(base: base, params: params)
+    let sign = QuantifiedSign(quantifier: quantifier, base: base, params: params)
     sign.range = lead.range.lowerBound ..< base.range!.upperBound
     return sign
   }

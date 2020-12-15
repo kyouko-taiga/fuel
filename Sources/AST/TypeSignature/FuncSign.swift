@@ -29,7 +29,7 @@ extension FuncSign: CustomStringConvertible {
     let dom = params.map(String.init(describing:)).joined(separator: ", ")
     let codom: String
     switch output {
-    case is FuncSign, is UniversalSign:
+    case is FuncSign, is QuantifiedSign:
       codom = "(\(output))"
     default:
       codom = String(describing: output)
