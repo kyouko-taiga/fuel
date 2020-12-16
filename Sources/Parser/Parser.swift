@@ -198,7 +198,7 @@ public struct Parser: StreamProcessor {
         loc = nil
       }
 
-      let stmt = ScopeAllocStmt(name: String(name.value), sign: sign, loc: loc)
+      let stmt = StackAllocStmt(name: String(name.value), sign: sign, loc: loc)
       stmt.range = name.range.lowerBound ..< upperBound
       return stmt
 

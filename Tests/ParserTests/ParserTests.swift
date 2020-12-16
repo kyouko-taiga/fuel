@@ -76,14 +76,14 @@ class ParserTests: XCTestCase, ParserTestCase {
     let _: ReturnStmt? = parse("return 1337", with: { try $0.parseStmt() })
   }
 
-  func testParseScopeAllocStmt() throws {
-    if let stmt: ScopeAllocStmt = parse("foo = salloc T", with: { try $0.parseStmt() }) {
+  func testParseStackAllocStmt() throws {
+    if let stmt: StackAllocStmt = parse("foo = salloc T", with: { try $0.parseStmt() }) {
       XCTAssertEqual(stmt.name, "foo")
       XCTAssert(stmt.sign is IdentSign)
       XCTAssertNil(stmt.loc)
     }
 
-    if let stmt: ScopeAllocStmt = parse("foo = salloc T at a", with: { try $0.parseStmt() }) {
+    if let stmt: StackAllocStmt = parse("foo = salloc T at a", with: { try $0.parseStmt() }) {
       XCTAssertEqual(stmt.name, "foo")
       XCTAssert(stmt.sign is IdentSign)
       let loc = try XCTUnwrap(stmt.loc)
@@ -145,7 +145,7 @@ class ParserTests: XCTestCase, ParserTestCase {
     """
     if let brace: BraceStmt = parse(input1, with: { try $0.parseStmt() }) {
       XCTAssertEqual(brace.stmts.count, 1)
-      XCTAssert(brace.stmts.first is ScopeAllocStmt)
+      XCTAssert(brace.stmts.first is StackAllocStmt)
     }
 
     let input2 = """
@@ -159,7 +159,7 @@ class ParserTests: XCTestCase, ParserTestCase {
     if let brace: BraceStmt = parse(input2, with: { try $0.parseStmt() }) {
       XCTAssertEqual(brace.stmts.count, 2)
       if brace.stmts.count == 2 {
-        XCTAssert(brace.stmts[0] is ScopeAllocStmt)
+        XCTAssert(brace.stmts[0] is StackAllocStmt)
         XCTAssert(brace.stmts[1] is BraceStmt)
       }
     }

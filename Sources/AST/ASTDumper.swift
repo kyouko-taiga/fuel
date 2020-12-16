@@ -234,9 +234,9 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << ")"
   }
 
-  public func visit(_ node: ScopeAllocStmt) {
+  public func visit(_ node: StackAllocStmt) {
     self << lead
-    self << "(ScopeAlloc \"\(node.symbol)\""
+    self << "(StackAlloc \"\(node.symbol)\""
     self << "\n"
     withInc { node.sign.accept(self) }
     self << ")"

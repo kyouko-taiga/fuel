@@ -1,6 +1,6 @@
 import Basic
 
-public final class ScopeAllocStmt: Stmt, NamedDecl {
+public final class StackAllocStmt: Stmt, NamedDecl {
 
   public init(name: String, sign: TypeSign, loc: LocDecl? = nil) {
     self.name = name
@@ -25,7 +25,7 @@ public final class ScopeAllocStmt: Stmt, NamedDecl {
 
 }
 
-extension ScopeAllocStmt: CustomStringConvertible {
+extension StackAllocStmt: CustomStringConvertible {
 
   public var description: String {
     if let loc = self.loc {

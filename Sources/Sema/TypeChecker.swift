@@ -84,7 +84,7 @@ public final class TypeChecker: Visitor {
     visit(node, with: typeCheck)
   }
 
-  public func visit(_ node: ScopeAllocStmt) {
+  public func visit(_ node: StackAllocStmt) {
     typeCheck(node)
   }
 
@@ -153,10 +153,10 @@ public final class TypeChecker: Visitor {
       }
     }
 
-    // Remove from the context the names and memory locations that are scoped by the block.
+    // Remove from the context the names and memory locations that are bound by the block.
     for decl in namedDecls {
       let sym = decl.symbol
-      if decl is ScopeAllocStmt {
+      if decl is StackAllocStmt {
         if let loc = (typingContext[sym]?.bareType as? LocType)?.location {
           typingContext[loc] = nil
         }
@@ -327,7 +327,7 @@ public final class TypeChecker: Visitor {
     }
   }
 
-  public func typeCheck(_ node: ScopeAllocStmt) {
+  public func typeCheck(_ node: StackAllocStmt) {
     // Determine the new storage's memory layout.
     guard let storageType = node.sign.type else {
       // Skip the declaration if it's type is undefined. This can be done silently, as it should

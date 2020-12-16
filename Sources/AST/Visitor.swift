@@ -13,7 +13,7 @@ public protocol Visitor {
 
   func visit(_ node: BraceStmt)
 
-  func visit(_ node: ScopeAllocStmt)
+  func visit(_ node: StackAllocStmt)
 
   func visit(_ node: FreeStmt)
 
@@ -159,14 +159,14 @@ extension Visitor {
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to visit.
-  public func visit(_ node: ScopeAllocStmt) {
+  public func visit(_ node: StackAllocStmt) {
     traverse(node)
   }
 
   /// Traverses the specified node, visiting each of its children.
   ///
   /// - Parameter node: The node to traverse.
-  @inlinable public func traverse(_ node: ScopeAllocStmt) {
+  @inlinable public func traverse(_ node: StackAllocStmt) {
     node.sign.accept(self)
   }
 
