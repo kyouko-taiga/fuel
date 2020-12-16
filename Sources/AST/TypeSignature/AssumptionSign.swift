@@ -1,6 +1,6 @@
 import Basic
 
-public final class AssumptionSign {
+public final class AssumptionSign: ASTNode {
 
   public init(ident: IdentExpr, sign: TypeSign) {
     self.ident = ident

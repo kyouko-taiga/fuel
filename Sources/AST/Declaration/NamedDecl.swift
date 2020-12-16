@@ -1,7 +1,7 @@
 import Basic
 
 /// A named declaration.
-public protocol NamedDecl: AnyObject {
+public protocol NamedDecl: ASTNode, AnyObject {
 
   /// The name of the declared entity.
   var name: String { get }
@@ -14,12 +14,6 @@ public protocol NamedDecl: AnyObject {
 
   /// The context in which the entity is being declared.
   var declContext: DeclContext? { get }
-
-  /// The range of the declaration in the source.
-  var range: SourceRange? { get }
-
-  /// Accepts an AST visitor.
-  func accept<V>(_ visitor: V) where V: Visitor
 
 }
 
