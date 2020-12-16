@@ -379,8 +379,20 @@ public struct Parser: StreamProcessor {
       quals.append(qual)
     }
 
-    // Parse an unbundled type signature.
-    var base: TypeSign
+    // Parse the bare type signature.
+    let base = try parseBareTypeSign()
+    if !quals.isEmpty {
+      let sign = QualSign(base: base, qualifiers: quals)
+      sign.range = lowerBound! ..< base.range!.upperBound
+      return sign
+    } else {
+      return base
+    }
+  }
+
+  /// Parses an unqualified type signature.
+  public mutating func parseBareTypeSign() throws -> TypeSign {
+    let base: TypeSign
     switch peek()?.kind {
     case .leftParen:
       let lead = peek()!
@@ -422,13 +434,7 @@ public struct Parser: StreamProcessor {
     if !assumps.isEmpty {
       let bundle = BundledSign(base: base, assumptions: assumps)
       bundle.range = base.range!.lowerBound ..< assumps.last!.range!.upperBound
-      base = bundle
-    }
-
-    if !quals.isEmpty {
-      let sign = QualSign(base: base, qualifiers: quals)
-      sign.range = lowerBound! ..< base.range!.upperBound
-      return sign
+      return bundle
     } else {
       return base
     }
@@ -468,7 +474,7 @@ public struct Parser: StreamProcessor {
       throw ParseError(message: "expected '.' separator", range: peek()?.range)
     }
 
-    let base = try parseTypeSign()
+    let base = try parseBareTypeSign()
     let quantifier = lead.kind == .universal
       ? Quantifier.universal
       : Quantifier.existential
