@@ -234,9 +234,17 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << ")"
   }
 
-  public func visit(_ node: StackAllocStmt) {
+  public func visit(_ node: AllocStmt) {
     self << lead
-    self << "(StackAlloc \"\(node.symbol)\""
+    self << "(AllocStmt \"\(node.symbol)\""
+
+    switch node.segment {
+    case .stack:
+      self << " segment=\"stack\""
+    case .heap:
+      self << " segment=\"heap\""
+    }
+
     self << "\n"
     withInc { node.sign.accept(self) }
     self << ")"

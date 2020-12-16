@@ -84,7 +84,7 @@ public final class TypeChecker: Visitor {
     visit(node, with: typeCheck)
   }
 
-  public func visit(_ node: StackAllocStmt) {
+  public func visit(_ node: AllocStmt) {
     typeCheck(node)
   }
 
@@ -124,14 +124,14 @@ public final class TypeChecker: Visitor {
         // Check that each packed assumption either adds a new binding, or agrees with the context.
         for assumption in eta {
           let prevAssumpType = typingContext[assumption.key]
-          guard (prevAssumpType == nil) || (prevAssumpType == assumption.value) else {
+          if (prevAssumpType != nil) && (prevAssumpType != assumption.value) {
             hasErrors = true
             TypeError
               .inconsistentAssumption(assump: assumption, range: param.range)
               .report(in: astContext)
-            continue
+          } else {
+            typingContext[assumption.key] = assumption.value
           }
-          typingContext[assumption.key] = assumption.value
         }
       } else {
         typingContext[sym] = paramType
@@ -142,26 +142,48 @@ public final class TypeChecker: Visitor {
   }
 
   public func typeCheck(_ node: BraceStmt) {
-    // Type-check each statement in the block.
-    var namedDecls: [NamedDecl] = []
+    var localSymbols: [Symbol] = []
+    var stackSymbols: [Symbol] = []
+
     for stmt in node.stmts {
+      // Type-check the statement.
       stmt.accept(self)
 
-      // Keep track of the named declarations so that they can be removed from the context later.
-      if let decl = stmt as? NamedDecl {
-        namedDecls.append(decl)
+      // Keep track of the local symbols that should be removed from the context on exit.
+      switch stmt {
+      case let decl as AllocStmt:
+        localSymbols.append(decl.symbol)
+
+        // If the allocation is performed on the stack, then we *must* collect the cell capability
+        // at the end of the lexical scope.
+        if decl.segment == .stack {
+          if let ty = typingContext[decl.symbol]?.bareType {
+            stackSymbols.append((ty as! LocType).location)
+          }
+        }
+
+      case let decl as NamedDecl:
+        localSymbols.append(decl.symbol)
+
+      default:
+        break
       }
     }
 
-    // Remove from the context the names and memory locations that are bound by the block.
-    for decl in namedDecls {
-      let sym = decl.symbol
-      if decl is StackAllocStmt {
-        if let loc = (typingContext[sym]?.bareType as? LocType)?.location {
-          typingContext[loc] = nil
-        }
-      }
+    // Remove the local symbols from the context.
+    for sym in localSymbols {
       typingContext[sym] = nil
+    }
+
+    let endRange = node.range.map({ range in range.upperBound ..< range.upperBound })
+    for sym in stackSymbols {
+      if typingContext[sym] == nil {
+        TypeError
+          .missingCapability(symbol: sym, type: anyType, range: endRange)
+          .report(in: astContext)
+      } else {
+        typingContext[sym] = nil
+      }
     }
   }
 
@@ -327,7 +349,7 @@ public final class TypeChecker: Visitor {
     }
   }
 
-  public func typeCheck(_ node: StackAllocStmt) {
+  public func typeCheck(_ node: AllocStmt) {
     // Determine the new storage's memory layout.
     guard let storageType = node.sign.type else {
       // Skip the declaration if it's type is undefined. This can be done silently, as it should

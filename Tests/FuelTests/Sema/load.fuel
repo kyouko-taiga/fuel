@@ -5,7 +5,7 @@ func main(x) : \A a . (!a + [a: Int32]) -> Void {
   // #!error@+1 cannot determine the type of expression 'nope'
   _1 = load nope
 
-  _2 = salloc Int32
+  _2 = halloc Int32
   store 1337, _2
   _3 = call consume, _2
 

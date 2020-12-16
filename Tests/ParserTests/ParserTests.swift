@@ -76,15 +76,24 @@ class ParserTests: XCTestCase, ParserTestCase {
     let _: ReturnStmt? = parse("return 1337", with: { try $0.parseStmt() })
   }
 
-  func testParseStackAllocStmt() throws {
-    if let stmt: StackAllocStmt = parse("foo = salloc T", with: { try $0.parseStmt() }) {
+  func testParseAllocStmt() throws {
+    if let stmt: AllocStmt = parse("foo = salloc T", with: { try $0.parseStmt() }) {
       XCTAssertEqual(stmt.name, "foo")
+      XCTAssertEqual(stmt.segment, .stack)
       XCTAssert(stmt.sign is IdentSign)
       XCTAssertNil(stmt.loc)
     }
 
-    if let stmt: StackAllocStmt = parse("foo = salloc T at a", with: { try $0.parseStmt() }) {
+    if let stmt: AllocStmt = parse("foo = halloc T", with: { try $0.parseStmt() }) {
       XCTAssertEqual(stmt.name, "foo")
+      XCTAssertEqual(stmt.segment, .heap)
+      XCTAssert(stmt.sign is IdentSign)
+      XCTAssertNil(stmt.loc)
+    }
+
+    if let stmt: AllocStmt = parse("foo = salloc T at a", with: { try $0.parseStmt() }) {
+      XCTAssertEqual(stmt.name, "foo")
+      XCTAssertEqual(stmt.segment, .stack)
       XCTAssert(stmt.sign is IdentSign)
       let loc = try XCTUnwrap(stmt.loc)
       XCTAssertEqual(loc.name, "a")
@@ -145,7 +154,7 @@ class ParserTests: XCTestCase, ParserTestCase {
     """
     if let brace: BraceStmt = parse(input1, with: { try $0.parseStmt() }) {
       XCTAssertEqual(brace.stmts.count, 1)
-      XCTAssert(brace.stmts.first is StackAllocStmt)
+      XCTAssert(brace.stmts.first is AllocStmt)
     }
 
     let input2 = """
@@ -159,7 +168,7 @@ class ParserTests: XCTestCase, ParserTestCase {
     if let brace: BraceStmt = parse(input2, with: { try $0.parseStmt() }) {
       XCTAssertEqual(brace.stmts.count, 2)
       if brace.stmts.count == 2 {
-        XCTAssert(brace.stmts[0] is StackAllocStmt)
+        XCTAssert(brace.stmts[0] is AllocStmt)
         XCTAssert(brace.stmts[1] is BraceStmt)
       }
     }

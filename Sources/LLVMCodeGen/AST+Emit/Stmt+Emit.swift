@@ -181,7 +181,7 @@ extension ReturnStmt: ValueEmittable {
 
 }
 
-extension StackAllocStmt: ValueEmittable {
+extension AllocStmt: ValueEmittable {
 
   func emit(in cgContext: inout CodeGenContext) -> IRValue {
     precondition(cgContext.environment[symbol] == nil)

@@ -180,8 +180,10 @@ public struct Parser: StreamProcessor {
   /// Parses the tail of a value-binding statement
   public mutating func parseStmtTail(name: Token) throws -> Stmt {
     switch peek()?.kind {
-    case .salloc:
-      take(.salloc)
+    case .salloc, .halloc:
+      let segment = take()!.kind == .salloc
+        ? MemorySegment.stack
+        : MemorySegment.heap
 
       let sign = try parseTypeSign()
       var upperBound = sign.range!.upperBound
@@ -198,7 +200,7 @@ public struct Parser: StreamProcessor {
         loc = nil
       }
 
-      let stmt = StackAllocStmt(name: String(name.value), sign: sign, loc: loc)
+      let stmt = AllocStmt(name: String(name.value), segment: segment, sign: sign, loc: loc)
       stmt.range = name.range.lowerBound ..< upperBound
       return stmt
 

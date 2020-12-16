@@ -39,7 +39,7 @@ public final class BraceStmt: Stmt, DeclContext {
       declCache[decl.name, default: []].append(decl)
 
       // Look for additional declarations in the statement.
-      if let loc = (decl as? StackAllocStmt)?.loc {
+      if let loc = (decl as? AllocStmt)?.loc {
         declCache[loc.name, default: []].append(loc)
       }
     }

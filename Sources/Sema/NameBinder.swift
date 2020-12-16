@@ -70,7 +70,7 @@ public final class NameBinder: Visitor {
     traverse(node)
   }
 
-  public func visit(_ node: StackAllocStmt) {
+  public func visit(_ node: AllocStmt) {
     node.declContext = declContext
     checkDuplicateDecl(node)
     traverse(node)

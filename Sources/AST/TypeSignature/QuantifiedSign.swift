@@ -57,11 +57,3 @@ extension QuantifiedSign: CustomStringConvertible {
   }
 
 }
-
-public enum Quantifier {
-
-  case universal
-
-  case existential
-
-}
