@@ -11,11 +11,11 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
   private var level = 0
 
   /// The leading spaces to display before each new line.
-  private var lead: String { String(repeating: " ", count: level) }
+  private var lead: String { String(repeating: "  ", count: level) }
 
   public func visit(_ node: AddrStmt) {
     self << lead
-    self << "(AddrStmt \"\(node.symbol)\""
+    self << "(\(type(of: node)) \"\(node.name)\""
     self << "\n"
     withInc { node.path.accept(self) }
     self << ")"
@@ -23,7 +23,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: AssumptionSign) {
     self << lead
-    self << "(AssumpSign"
+    self << "(\(type(of: node))"
 
     self << "\n"
     withInc { node.ident.accept(self) }
@@ -35,12 +35,12 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: BoolLit) {
     self << lead
-    self << "(BoolLit \"\(node.value)\")"
+    self << "(\(type(of: node)) \"\(node.value)\")"
   }
 
   public func visit(_ node: BraceStmt) {
     self << lead
-    self << "(BraceStmt"
+    self << "(\(type(of: node))"
 
     for stmt in node.stmts {
       self << "\n"
@@ -52,7 +52,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: CallStmt) {
     self << lead
-    self << "(CallStmt \"\(node.symbol)\""
+    self << "(\(type(of: node)) \"\(node.name)\""
 
     self << "\n"
     withInc { node.ident.accept(self) }
@@ -67,22 +67,14 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: IdentExpr) {
     self << lead
-    self << "(IdentExpr \"\(node.name)\""
-
-    if let decl = node.referredDecl {
-      self << " \"\(decl.symbol)\""
-    }
+    self << "(\(type(of: node)) \"\(node.name)\""
 
     self << ")"
   }
 
   public func visit(_ node: IdentSign) {
     self << lead
-    self << "(IdentSign \"\(node.name)\""
-
-    if let decl = node.referredDecl {
-      self << " \"\(decl.symbol)\""
-    }
+    self << "(\(type(of: node)) \"\(node.name)\""
 
     if let type = node.type {
       self << " type=\"\(type)\""
@@ -93,7 +85,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: IfStmt) {
     self << lead
-    self << "(IfStmt"
+    self << "(\(type(of: node))"
 
     self << "\n"
     withInc { node.cond.accept(self) }
@@ -111,12 +103,12 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: IntLit) {
     self << lead
-    self << "(IntLit \"\(node.value)\")"
+    self << "(\(type(of: node)) \"\(node.value)\")"
   }
 
   public func visit(_ node: FuncDecl) {
     self << lead
-    self << "(FuncDecl \"\(node.symbol)\""
+    self << "(\(type(of: node)) \"\(node.name)\""
 
     self << "\n"
     withInc { node.sign.accept(self) }
@@ -131,7 +123,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: FuncSign) {
     self << lead
-    self << "(FuncSign"
+    self << "(\(type(of: node))"
 
     if let type = node.type {
       self << " type=\"\(type)\""
@@ -150,13 +142,13 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: FuncParamDecl) {
     self << lead
-    self << "(FuncParamDecl \"\(node.symbol)\""
+    self << "(\(type(of: node)) \"\(node.name)\""
     self << ")"
   }
 
   public func visit(_ node: FreeStmt) {
     self << lead
-    self << "(FreeStmt"
+    self << "(\(type(of: node))"
     self << "\n"
     withInc { node.expr.accept(self) }
     self << ")"
@@ -164,15 +156,21 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: LoadStmt) {
     self << lead
-    self << "(Load \"\(node.symbol)\""
+    self << "(\(type(of: node)) \"\(node.name)\""
     self << "\n"
     withInc { node.lvalue.accept(self) }
     self << ")"
   }
 
+  public func visit(_ node: LocDecl) {
+    self << lead
+    self << "(\(type(of: node)) \"\(node.name)\""
+    self << ")"
+  }
+
   public func visit(_ node: LocSign) {
     self << lead
-    self << "(LocSign"
+    self << "(\(type(of: node))"
 
     if let type = node.type {
       self << " type=\"\(type)\""
@@ -185,7 +183,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: MemberExpr) {
     self << lead
-    self << "(MemberExpr offset=\(node.offset)"
+    self << "(\(type(of: node)) offset=\(node.offset)"
     self << "\n"
     withInc { node.base.accept(self) }
     self << ")"
@@ -193,7 +191,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: Module) {
     self << lead
-    self << "(Module"
+    self << "(\(type(of: node))"
     self << " \"\(node.id)\""
 
     for decl in node.allDecls {
@@ -206,12 +204,12 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: BuiltinTypeDecl) {
     self << lead
-    self << "(BuiltinTypeDecl \"\(node.name)\")"
+    self << "(\(type(of: node)) \"\(node.name)\")"
   }
 
   public func visit(_ node: BundledSign) {
     self << lead
-    self << "(BundledSign"
+    self << "(\(type(of: node))"
 
     if let type = node.type {
       self << " type=\"\(type)\""
@@ -228,15 +226,30 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << ")"
   }
 
+  public func visit(_ node: QualSign) {
+    self << lead
+    self << "(\(type(of: node))"
+
+    if let type = node.type {
+      self << " type=\"\(type)\""
+    }
+    self << " qualifiers=\(node.qualifiers)"
+
+    self << "\n"
+    withInc { node.base.accept(self) }
+
+    self << ")"
+  }
+
   public func visit(_ node: QuantifiedParamDecl) {
     self << lead
-    self << "(QuantifiedParamDecl \"\(node.name)\""
+    self << "(\(type(of: node)) \"\(node.name)\""
     self << ")"
   }
 
   public func visit(_ node: ReturnStmt) {
     self << lead
-    self << "(ReturnStmt"
+    self << "(\(type(of: node))"
     self << "\n"
     withInc { node.value.accept(self) }
     self << ")"
@@ -244,7 +257,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: AllocStmt) {
     self << lead
-    self << "(AllocStmt \"\(node.symbol)\""
+    self << "(\(type(of: node)) \"\(node.name)\""
 
     switch node.segment {
     case .stack:
@@ -260,7 +273,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: StoreStmt) {
     self << lead
-    self << "(StoreStmt"
+    self << "(\(type(of: node))"
     self << "\n"
     withInc { node.rvalue.accept(self) }
     self << "\n"
@@ -270,7 +283,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: TupleSign) {
     self << lead
-    self << "(TupleSign"
+    self << "(\(type(of: node))"
 
     if let type = node.type {
       self << " type=\"\(type)\""
@@ -286,7 +299,14 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: QuantifiedSign) {
     self << lead
-    self << "(QuantifiedSign"
+    self << "(\(type(of: node))"
+
+    switch node.quantifier {
+    case .universal:
+      self << " quantifier=\"universal\""
+    case .existential:
+      self << " quantifier=\"existential\""
+    }
 
     if let type = node.type {
       self << " type=\"\(type)\""
@@ -305,7 +325,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
 
   public func visit(_ node: VoidLit) {
     self << lead
-    self << "(VoidLit)"
+    self << "(\(type(of: node)))"
   }
 
   func withInc(_ action: () -> Void) {
