@@ -91,14 +91,31 @@ public final class NameBinder: Visitor {
   public func visit(_ node: IdentExpr) {
     traverse(node)
 
-    if let decl = declContext?.lookup(name: node.name) {
-      node.referredDecl = decl
-    } else {
+    guard let decl = declContext?.lookup(name: node.name) else {
       hasErrors = true
       astContext.report(message: "cannot find '\(node.name)' in scope")
         .set(location: node.range?.lowerBound)
         .add(range: node.range)
+      return
     }
+
+    guard !(decl is LocDecl) else {
+      hasErrors = true
+      astContext.report(message: "location '\(node.name)' is not a first-class value")
+        .set(location: node.range?.lowerBound)
+        .add(range: node.range)
+      return
+    }
+
+    guard !(decl is NominalTypeDecl) else {
+      hasErrors = true
+      astContext.report(message: "type '\(node.name)' is not a first-class value")
+        .set(location: node.range?.lowerBound)
+        .add(range: node.range)
+      return
+    }
+
+    node.referredDecl = decl
   }
 
   public func visit(_ node: IdentSign) {
