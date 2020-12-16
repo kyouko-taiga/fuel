@@ -135,16 +135,9 @@ public struct Parser: StreamProcessor {
 
     case .free:
       let lead = take(.free)!
-
       let expr = try parseExpr()
-      guard let lvalue = expr as? LValueExpr else {
-        throw ParseError(
-          message: "target of free statement must be an l-value",
-          range: expr.range)
-      }
-
-      let stmt = FreeStmt(lvalue: lvalue)
-      stmt.range = lead.range.lowerBound ..< lvalue.range!.upperBound
+      let stmt = FreeStmt(expr: expr)
+      stmt.range = lead.range.lowerBound ..< expr.range!.upperBound
       return stmt
 
     case .store:

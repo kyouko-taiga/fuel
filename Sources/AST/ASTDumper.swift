@@ -158,7 +158,7 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << lead
     self << "(FreeStmt"
     self << "\n"
-    withInc { node.lvalue.accept(self) }
+    withInc { node.expr.accept(self) }
     self << ")"
   }
 

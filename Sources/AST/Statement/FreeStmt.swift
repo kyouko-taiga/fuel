@@ -2,11 +2,11 @@ import Basic
 
 public final class FreeStmt: Stmt {
 
-  public init(lvalue: LValueExpr) {
-    self.lvalue = lvalue
+  public init(expr: Expr) {
+    self.expr = expr
   }
 
-  public var lvalue: LValueExpr
+  public var expr: Expr
 
   public var range: SourceRange?
 
@@ -19,7 +19,7 @@ public final class FreeStmt: Stmt {
 extension FreeStmt: CustomStringConvertible {
 
   public var description: String {
-    return "free \(lvalue)"
+    return "free \(expr)"
   }
 
 }
