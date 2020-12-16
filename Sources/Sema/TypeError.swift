@@ -61,6 +61,12 @@ public struct TypeError: Error {
       range: expr.range)
   }
 
+  static func freeOnNonPointerType(expr: Expr, type: BareType) -> TypeError {
+    return TypeError(
+      message: "invalid free statement on non-pointer type '\(type)'",
+      range: expr.range)
+  }
+
   static func invalidCallArgTypes(funcIdent: IdentExpr, argTypes: [QualType?]) -> TypeError {
     let argTypesDesc = argTypes
       .map({ arg in arg.map(String.init(describing:)) ?? "_" })

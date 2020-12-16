@@ -88,6 +88,10 @@ public final class TypeChecker: Visitor {
     typeCheck(node)
   }
 
+  public func visit(_ node: FreeStmt) {
+    visit(node, with: typeCheck)
+  }
+
   public func visit(_ node: StoreStmt) {
     visit(node, with: typeCheck)
   }
@@ -248,14 +252,6 @@ public final class TypeChecker: Visitor {
     }
   }
 
-  public func visit(_ node: FreeStmt) {
-    // Determine the type of the identifier being deallocated.
-    node.ident.accept(self)
-
-    // Extract a capability `[a: loose τ]`.
-    fatalError("todo")
-  }
-
   public func typeCheck(_ node: IfStmt) throws {
     // Visit the node's condition.
     node.cond.accept(self)
@@ -350,7 +346,7 @@ public final class TypeChecker: Visitor {
   }
 
   public func typeCheck(_ node: AllocStmt) {
-    // Determine the new storage's memory layout.
+    // Determine the new cell's memory layout.
     guard let storageType = node.sign.type else {
       // Skip the declaration if it's type is undefined. This can be done silently, as it should
       // only happen when the type realizer was not able to evaluate an appropriate type, which
@@ -361,13 +357,32 @@ public final class TypeChecker: Visitor {
     // Create a new location symbol.
     let sym = node.loc?.symbol ?? nextSymbol(isLocRef: true)
 
-    // Allocate a new cell and create a capacity for it.
+    // Associate the register with the freshly allocated cell.
     typingContext[node.symbol] = astContext
       .locType(location: sym)
-      .qualified()
+      .qualified(by: .none)
+
+    // Create a capability for the freshly allocated cell.
     typingContext[sym] = astContext
       .junkType(base: storageType.bareType)
       .qualified(by: storageType.quals)
+  }
+
+  public func typeCheck(_ node: FreeStmt) throws {
+    // Determine the type of the expression.
+    let exprTy = try type(of: node.expr)
+
+    // Check that the expression refers to a pointer.
+    guard let locTy = exprTy.bareType as? LocType else {
+      throw TypeError.freeOnNonPointerType(expr: node.expr, type: exprTy.bareType)
+    }
+
+    // Check that we have the capability to delete the location.
+    guard typingContext[locTy.location] != nil else {
+      throw TypeError.missingCapability(symbol: locTy.location, type: anyType, range: node.range)
+    }
+
+    typingContext[locTy.location] = nil
   }
 
   public func typeCheck(_ node: StoreStmt) throws {
