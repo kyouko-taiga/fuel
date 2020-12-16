@@ -181,7 +181,7 @@ extension Visitor {
   ///
   /// - Parameter node: The node to traverse.
   @inlinable public func traverse(_ node: FreeStmt) {
-    node.ident.accept(self)
+    node.lvalue.accept(self)
   }
 
   /// Traverses the specified node, visiting each of its children.

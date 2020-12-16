@@ -154,6 +154,14 @@ public final class ASTDumper<Output>: Visitor where Output: TextOutputStream {
     self << ")"
   }
 
+  public func visit(_ node: FreeStmt) {
+    self << lead
+    self << "(FreeStmt"
+    self << "\n"
+    withInc { node.lvalue.accept(self) }
+    self << ")"
+  }
+
   public func visit(_ node: LoadStmt) {
     self << lead
     self << "(Load \"\(node.symbol)\""
