@@ -25,8 +25,7 @@ protocol ParserTestCase {
 extension ParserTestCase {
 
   func tokenize(_ input: String) -> Lexer {
-    let source = sourceManager.load(string: input)
-    return Lexer(source: source)
+    return Lexer(input: sourceManager.load(string: input))
   }
 
   func parse<T, U>(

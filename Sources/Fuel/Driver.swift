@@ -61,7 +61,7 @@ public final class Driver {
   }
 
   public func parse(url: URL) throws {
-    let lexer = Lexer(source: try sourceManager.load(contentsOf: url))
+    let lexer = Lexer(input: try sourceManager.load(contentsOf: url))
     var parser = Parser(astContext: astContext, input: lexer)
 
     var decls: [FuncDecl] = []

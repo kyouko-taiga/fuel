@@ -6,21 +6,17 @@ public struct Lexer: IteratorProtocol, Sequence, StreamProcessor {
 
   /// Creates a new lexer for the given source file.
   ///
-  /// - Parameter source: A source file.
-  public init(source: SourceFile) {
-    self.source = source
-    self.input = source.contents
+  /// - Parameter input: A source file.
+  public init(input: SourceFile) {
+    self.input = input
     self.index = input.startIndex
   }
 
-  /// The source file being tokenized.
-  private let source: SourceFile
-
   /// The contents of the file being tokenized.
-  public let input: String
+  public let input: SourceFile
 
   /// The index from which the file is being tokenized.
-  public var index: String.Index
+  public var index: SourceFile.Index
 
   /// A boolean value that indicates whether the source file has been completed processed.
   private var depleted = false
@@ -51,41 +47,41 @@ public struct Lexer: IteratorProtocol, Sequence, StreamProcessor {
 
       switch identifier {
       case "return":
-        return Token(kind: .return_ , value: value, source: source)
+        return Token(kind: .return_ , value: value)
       case "func":
-        return Token(kind: .func_   , value: value, source: source)
+        return Token(kind: .func_   , value: value)
       case "salloc":
-        return Token(kind: .salloc  , value: value, source: source)
+        return Token(kind: .salloc  , value: value)
       case "halloc":
-        return Token(kind: .halloc  , value: value, source: source)
+        return Token(kind: .halloc  , value: value)
       case "at":
-        return Token(kind: .at       , value: value, source: source)
+        return Token(kind: .at      , value: value)
       case "call":
-        return Token(kind: .call    , value: value, source: source)
+        return Token(kind: .call    , value: value)
       case "insert":
-        return Token(kind: .insert  , value: value, source: source)
+        return Token(kind: .insert  , value: value)
       case "extract":
-        return Token(kind: .extract , value: value, source: source)
+        return Token(kind: .extract , value: value)
       case "free":
-        return Token(kind: .free    , value: value, source: source)
+        return Token(kind: .free    , value: value)
       case "store":
-        return Token(kind: .store   , value: value, source: source)
+        return Token(kind: .store   , value: value)
       case "load":
-        return Token(kind: .load    , value: value, source: source)
+        return Token(kind: .load    , value: value)
       case "if":
-        return Token(kind: .if_     , value: value, source: source)
+        return Token(kind: .if_     , value: value)
       case "else":
-        return Token(kind: .else_   , value: value, source: source)
+        return Token(kind: .else_   , value: value)
       case "while":
-        return Token(kind: .while_  , value: value, source: source)
+        return Token(kind: .while_  , value: value)
       case "void":
-        return Token(kind: .void    , value: value, source: source)
+        return Token(kind: .void    , value: value)
       case "true":
-        return Token(kind: .true_   , value: value, source: source)
+        return Token(kind: .true_   , value: value)
       case "false":
-        return Token(kind: .false_  , value: value, source: source)
+        return Token(kind: .false_  , value: value)
       default:
-        return Token(kind: .name    , value: value, source: source)
+        return Token(kind: .name    , value: value)
       }
     }
 
@@ -93,13 +89,13 @@ public struct Lexer: IteratorProtocol, Sequence, StreamProcessor {
     if peek() == "@" {
       take()
       take(while: { $0.isLetter })
-      return Token(kind: .qualifier, value: input[start ..< index], source: source)
+      return Token(kind: .qualifier, value: input[start ..< index])
     }
 
     // Lex number literals.
     if ch.isNumber {
       take(while: { $0.isDigit })
-      return Token(kind: .integer, value: input[start ..< index], source: source)
+      return Token(kind: .integer, value: input[start ..< index])
     }
 
     // Lex operators and punctuation.
@@ -114,7 +110,7 @@ public struct Lexer: IteratorProtocol, Sequence, StreamProcessor {
 
     if let k = kind {
       take(n: 2)
-      return Token(kind: k, value: input[start ..< index], source: source)
+      return Token(kind: k, value: input[start ..< index])
     }
 
     switch peek() {
@@ -137,11 +133,11 @@ public struct Lexer: IteratorProtocol, Sequence, StreamProcessor {
 
     if let k = kind {
       take()
-      return Token(kind: k, value: input[start ..< index], source: source)
+      return Token(kind: k, value: input[start ..< index])
     }
 
     take()
-    return Token(kind: .unknown, value: input[start ..< index], source: source)
+    return Token(kind: .unknown, value: input[start ..< index])
   }
 
   @discardableResult

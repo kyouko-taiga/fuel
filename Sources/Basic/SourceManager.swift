@@ -1,14 +1,17 @@
 import Foundation
 
-/// A source manager that handles files on a local file system.
-public final class SourceManager {
+/// An object that manages the contents of source files.
+public class SourceManager {
 
-  /// Creates a new local source manager.
+  /// Creates a new source manager.
   public init() {
   }
 
-  /// A file content cache.
-  private var contentCache: [URL: String] = [:]
+  /// A dictionary mapping absolute URLs of loaded source files onto their range in the buffer.
+  private var ledger: [URL: SourceFile] = [:]
+
+  /// The manager's internal buffer.
+  private var buffer: String = ""
 
   /// Loads a source file from the URL of a local file.
   ///
@@ -19,13 +22,22 @@ public final class SourceManager {
     contentsOf url: URL,
     encoding: String.Encoding = .utf8
   ) throws -> SourceFile {
-    let url = url.absoluteURL
-    if contentCache[url] != nil {
-      return SourceFile(manager: self, url: url)
+    let absoluteURL = url.absoluteURL
+
+    if let sourceFile = ledger[absoluteURL] {
+      return sourceFile
     }
 
-    contentCache[url] = try String(contentsOf: url, encoding: encoding)
-    return SourceFile(manager: self, url: url)
+    let startIndex = buffer.endIndex
+    buffer.append(contentsOf: try String(contentsOf: url, encoding: encoding))
+
+    let sourceFile = SourceFile(
+      manager: self,
+      url: absoluteURL,
+      startIndex: startIndex,
+      endIndex: buffer.endIndex)
+    ledger[absoluteURL] = sourceFile
+    return sourceFile
   }
 
   /// Loads a source file from a local path.
@@ -44,16 +56,33 @@ public final class SourceManager {
   ///
   /// - Parameter string: A character string with the contents of the source file.
   public func load(string: String) -> SourceFile {
-    let url = URL(string: "memory://" + UUID().uuidString)!
-    contentCache[url] = string
-    return SourceFile(manager: self, url: url)
+    let absoluteURL = URL(string: "memory://" + UUID().uuidString)!
+
+    let startIndex = buffer.endIndex
+    buffer.append(contentsOf: string)
+
+    let sourceFile = SourceFile(
+      manager: self,
+      url: absoluteURL,
+      startIndex: startIndex,
+      endIndex: buffer.endIndex)
+    ledger[absoluteURL] = sourceFile
+    return sourceFile
   }
 
-  /// Returns the contents of a managed source file.
+  /// Returns the source file containing the specified location.
   ///
-  /// - Parameter url: The URL of a managed source file.
-  public func contents(of url: URL) -> String {
-    return contentCache[url]!
+  /// - Parameter location: A source location.
+  public func source(containing location: String.Index) -> SourceFile? {
+    return ledger.values.first(where: { ($0.startIndex ..< $0.endIndex) ~= location })
+  }
+
+  /// Returns the contents of the given source file.
+  ///
+  /// - Parameter sourceFile: A source file.
+  public func contents(of sourceFile: SourceFile) -> Substring {
+    precondition(sourceFile.manager === self)
+    return buffer[sourceFile.startIndex ..< sourceFile.endIndex]
   }
 
 }

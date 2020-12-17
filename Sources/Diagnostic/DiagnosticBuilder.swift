@@ -8,7 +8,7 @@ import Basic
 /// The diagnostic is emitted automatically when the last reference on this class is dropped.
 public final class DiagnosticBuilder {
 
-  public init(message: String, consumer: @escaping (Diagnostic, SourceLocation?) -> Void) {
+  public init(message: String, consumer: @escaping (Diagnostic, SourceRange.Bound?) -> Void) {
     self.message = message
     self.consumer = consumer
   }
@@ -22,14 +22,14 @@ public final class DiagnosticBuilder {
   public let message: String
 
   /// The source location at which the diagnostic should be reported.
-  public var location: SourceLocation?
+  public var location: SourceRange.Bound?
 
   /// A closure that can consume the diagnostic when it is emitted.
-  public var consumer: (Diagnostic, SourceLocation?) -> Void
+  public var consumer: (Diagnostic, SourceRange.Bound?) -> Void
 
   /// Sets the source location at which the diagnostic should be reported.
   @discardableResult
-  public func set(location: SourceLocation?) -> DiagnosticBuilder {
+  public func set(location: SourceRange.Bound?) -> DiagnosticBuilder {
     self.location = location
     return self
   }

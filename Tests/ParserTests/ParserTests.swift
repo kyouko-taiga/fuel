@@ -65,6 +65,7 @@ class ParserTests: XCTestCase, ParserTestCase {
 
   func testParseFreeStmt() {
     let _: FreeStmt? = parse("free foo", with: { try $0.parseStmt() })
+    let _: FreeStmt? = parse("free foo.0", with: { try $0.parseStmt() })
   }
 
   func testParseStoreStmt() {

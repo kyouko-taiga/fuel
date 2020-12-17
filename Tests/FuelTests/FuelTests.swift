@@ -22,7 +22,7 @@ class FuelTests: XCTestCase {
       // Scan the source file for test annotations.
       var expectations: [Int: [DiagnosticPattern]] = [:]
 
-      let lines = source.contents.split(separator: "\n", omittingEmptySubsequences: false)
+      let lines = source.split(separator: "\n", omittingEmptySubsequences: false)
       for (i, line) in lines.enumerated() {
         guard let range = line.range(of: "#!error") else { continue }
         var start = line.index(range.lowerBound, offsetBy: 7)

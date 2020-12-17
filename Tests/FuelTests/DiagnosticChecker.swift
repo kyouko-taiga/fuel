@@ -21,18 +21,18 @@ class DiagnosticChecker: DiagnosticConsumer {
     XCTFail("unexpected diagnostic: \(diagnostic.message)")
   }
 
-  func consume(_ diagnostic: Diagnostic, at location: SourceLocation) {
+  func consume(_ diagnostic: Diagnostic, at location: SourceRange.Bound) {
     // Load the contents of the source file.
-    guard let source = try? sourceManager.load(contentsOf: location.sourceURL) else {
+    guard let source = sourceManager.source(containing: location) else {
       consume(diagnostic)
       return
     }
 
-    let (lineIndex, _) = source.caretPosition(at: location)
+    let lineIndex = source.lineIndex(at: location)
     let exp = expectations[lineIndex] ?? []
     guard let i = exp.firstIndex(where: { $0.matches(diagnostic) }) else {
       // TODO: Include line and column index in the failure message.
-      let filename = location.sourceURL.lastPathComponent
+      let filename = source.url.lastPathComponent
       XCTFail("\(filename): unexpected diagnostic: \(diagnostic.message)")
       return
     }

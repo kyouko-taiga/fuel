@@ -1,29 +1,39 @@
-/// Exchanges the values of the two arguments.
-func swap(x, y) : \A a, b . ((!a + [a: Int], !b + [b: Int]) -> Void + [a: Int] + [b: Int]) {
-  lhs = load x
-  rhs = load y
-  store lhs, y
-  store rhs, x
-  return void
+func factorial(n) : (Int32) -> Int32 {
+  _0 = salloc Int32
+  _1 = call le_Int32, n, 1
+  if _1 {
+    store 1, _0
+  } else {
+    _2 = call sub_Int32, n, 1
+    _3 = call factorial, _2
+    _4 = call mul_Int32, n, _3
+    store _4, _0
+  }
+  _5 = load _0
+  return _5
 }
 
-/// A foreign function.
-func ext(x) : \A a . ((!a + [a: Int]) -> Int + [a: Int])
+func main() : () -> Int32 {
+  _0 = call factorial, 3
+  return _0
+}
 
-func hello(x) : (Int) -> Int {
-  local = salloc Int
-
-  if true {
-    y = salloc Int
-    store x, y
-    store 0, local
-
-    z = call swap, local, y
+func factorial(n, a) : (Int32, Int32) -> Int32 {
+  _0 = salloc Int32
+  _1 = call eq_Int32, n, 0
+  if _1 {
+    store a, _0
   } else {
-    store 0, local
-    foo = call ext, local
+    _2 = call sub_Int32, n, 1
+    _3 = call mul_Int32, n, a
+    _4 = call factorial, _2, _3
+    store _4, _0
   }
+  _5 = load _0
+  return _5
+}
 
-  y = load local
-  return y
+func main() : () -> Int32 {
+  _0 = call factorial, 3, 1
+  return _0
 }

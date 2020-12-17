@@ -1,0 +1,13 @@
+type List = \E a.({ Int, !a } + [a: List])
+type List = { Int, &List }
+
+func main() : () -> Void {
+  // ...
+
+  while x is List {
+    spread x as val, tailptr {
+      tail = load tailptr
+      store tail, x
+    }
+  }
+}
